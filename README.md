@@ -59,6 +59,19 @@ Sign in with `ADMIN_EMAIL` / `ADMIN_PASSWORD` from `backend/.env`.
 | typecheck | `npm run typecheck` | `npm run typecheck` |
 | DB | `db:migrate`, `db:deploy`, `db:seed`, `db:studio` | |
 
+## Docker images
+
+Each project has its own Dockerfile. Both images are multi-stage builds on `node:22-alpine`, run as a non-root user, and include a healthcheck.
+
+| Image | Build | Listens | Notes |
+|---|---|---|---|
+| API | `docker build -t stms-api backend` | `:4000` | On start it runs `prisma migrate deploy` (set `SKIP_MIGRATIONS=true` to skip) and creates the admin from `ADMIN_EMAIL`/`ADMIN_PASSWORD` if missing. Local-disk uploads go to the `/app/uploads` volume. |
+| Web | `docker build -t stms-web --build-arg INTERNAL_API_URL=http://api:4000 frontend` | `:3000` | `INTERNAL_API_URL` is the API's **internal** address. It is baked into the build for the `/api` proxy, so rebuild if it changes. |
+
+**API environment:** `DATABASE_URL`, `SESSION_SECRET`, `APP_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME`, and `S3_*` (see [backend/.env.example](backend/.env.example)). `NODE_ENV=production` is set in the image, so cookies are `Secure`: serve the site over HTTPS.
+
+Only the web container needs a public domain. The browser never calls the API directly.
+
 ## Deployment
 
-The target is Dokploy. The packaging approach hasn't been decided yet.
+The target is Dokploy. Each image can be its own Dokploy application, plus a Dokploy Postgres service.
