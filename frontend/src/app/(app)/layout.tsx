@@ -14,7 +14,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="flex min-h-dvh">
       <Sidebar propertyName={settings.propertyName} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-line bg-white/90 px-4 backdrop-blur sm:px-6">
+        <header className="sticky top-0 z-30 flex print:hidden h-16 items-center gap-3 border-b border-line bg-white/90 px-4 backdrop-blur sm:px-6">
           <Link href="/dashboard" className="flex items-center gap-2 lg:hidden" aria-label="STMS home">
             <LogoMark className="h-7 w-8" />
             <span className="text-lg font-extrabold text-primary">STMS</span>
@@ -31,7 +31,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <UserMenu user={user} />
           </div>
         </header>
-        <main className="mx-auto w-full max-w-7xl flex-1 px-4 pt-5 pb-28 sm:px-6 sm:pt-7 lg:pb-10">{children}</main>
+        <main className="mx-auto w-full max-w-7xl flex-1 px-4 pt-5 pb-28 sm:px-6 sm:pt-7 lg:pb-10 print:max-w-none print:p-0">{children}</main>
       </div>
       <BottomNav />
     </div>

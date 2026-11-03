@@ -55,3 +55,23 @@
 @utility pb-safe {
   padding-bottom: max(env(safe-area-inset-bottom), 0px);
 }
+
+/* Printing: keep brand colours (navy header, status pills) and drop app chrome. */
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+  html,
+  body {
+    background: #fff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  [data-sonner-toaster] {
+    display: none !important;
+  }
+  a {
+    text-decoration: none !important;
+  }
+}

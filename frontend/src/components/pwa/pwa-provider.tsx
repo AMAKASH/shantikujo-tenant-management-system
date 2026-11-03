@@ -80,7 +80,7 @@ export function PwaProvider() {
   return (
     <div
       role="status"
-      className="fixed inset-x-0 top-0 z-[60] flex items-center justify-center gap-2 bg-warning px-4 py-1.5 pt-[max(env(safe-area-inset-top),6px)] text-xs font-semibold text-white"
+      className="fixed inset-x-0 top-0 z-[60] flex print:hidden items-center justify-center gap-2 bg-warning px-4 py-1.5 pt-[max(env(safe-area-inset-top),6px)] text-xs font-semibold text-white"
     >
       <WifiOff className="size-3.5" aria-hidden /> You&apos;re offline. Changes can&apos;t be saved until you reconnect.
     </div>

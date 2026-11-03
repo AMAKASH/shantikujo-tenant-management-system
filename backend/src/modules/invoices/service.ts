@@ -167,7 +167,7 @@ export async function allocate(
 
 export const invoiceInclude = {
   lines: { orderBy: { createdAt: "asc" } },
-  tenant: { select: { id: true, fullName: true, phone: true } },
+  tenant: { select: { id: true, fullName: true, phone: true, email: true } },
   lease: { select: { id: true, apartment: { select: { id: true, number: true } } } },
   allocations: {
     include: { payment: { select: { id: true, number: true, date: true, method: true, reference: true } } },

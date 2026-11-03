@@ -20,6 +20,10 @@ const schema = z.object({
   invoicePrefix: z.string().trim().regex(/^[A-Z]{2,6}$/, "2–6 capital letters"),
   receiptPrefix: z.string().trim().regex(/^[A-Z]{2,6}$/, "2–6 capital letters"),
   defaultNoticeMonths: z.coerce.number().int().min(0).max(12),
+  contactPhone: z.string().trim().max(40),
+  contactEmail: z.union([z.literal(""), z.string().trim().email()]),
+  invoiceNote: z.string().trim().max(400),
+  paymentMethods: z.array(z.enum(["CASH", "BANK", "BKASH", "NAGAD", "ROCKET", "CHEQUE", "OTHER"])).max(7),
   electricity: z.object({
     slabs: z
       .array(z.object({ upTo: z.coerce.number().positive().nullable(), rate: z.coerce.number().min(0) }))

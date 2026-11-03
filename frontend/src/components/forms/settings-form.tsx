@@ -6,13 +6,17 @@ import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
-import { Field, Input } from "@/components/ui/field";
+import { Field, Input, Textarea } from "@/components/ui/field";
 import { apiFetch, errorMessage } from "@/lib/api.client";
-import type { Settings } from "@/lib/types";
+import type { PaymentMethod, Settings } from "@/lib/types";
+import { METHOD_LABEL } from "@/lib/utils";
+
+const METHODS = Object.keys(METHOD_LABEL) as PaymentMethod[];
 
 export function SettingsForm({ settings }: { settings: Settings }) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [methods, setMethods] = useState<PaymentMethod[]>(settings.paymentMethods ?? []);
   const [flatEnabled, setFlatEnabled] = useState(settings.electricity.flatRate?.enabled ?? false);
   const [slabs, setSlabs] = useState(settings.electricity.slabs.map((s) => ({ upTo: s.upTo == null ? "" : String(s.upTo), rate: String(s.rate) })));
 
@@ -30,6 +34,10 @@ export function SettingsForm({ settings }: { settings: Settings }) {
           invoicePrefix: String(f.get("invoicePrefix")).toUpperCase(),
           receiptPrefix: String(f.get("receiptPrefix")).toUpperCase(),
           defaultNoticeMonths: Number(f.get("defaultNoticeMonths")),
+          contactPhone: f.get("contactPhone"),
+          contactEmail: f.get("contactEmail"),
+          invoiceNote: f.get("invoiceNote"),
+          paymentMethods: METHODS.filter((m) => methods.includes(m)),
           electricity: {
             slabs: slabs.map((s, i) => ({ upTo: i === slabs.length - 1 || s.upTo === "" ? null : Number(s.upTo), rate: Number(s.rate) })),
             demandCharge: Number(f.get("demandCharge")),
@@ -80,6 +88,37 @@ export function SettingsForm({ settings }: { settings: Settings }) {
           <Field label="Receipt prefix" htmlFor="receiptPrefix">
             <Input id="receiptPrefix" name="receiptPrefix" defaultValue={settings.receiptPrefix} maxLength={6} className="uppercase" />
           </Field>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader title="Printed invoice" description="Shown on invoices when you print them or save them as PDF." />
+        <CardBody className="grid gap-4 sm:grid-cols-2">
+          <Field label="Office phone" htmlFor="contactPhone">
+            <Input id="contactPhone" name="contactPhone" type="tel" defaultValue={settings.contactPhone} />
+          </Field>
+          <Field label="Office email" htmlFor="contactEmail">
+            <Input id="contactEmail" name="contactEmail" type="email" defaultValue={settings.contactEmail} />
+          </Field>
+          <Field label="Note" htmlFor="invoiceNote" className="sm:col-span-2">
+            <Textarea id="invoiceNote" name="invoiceNote" rows={2} maxLength={400} defaultValue={settings.invoiceNote} />
+          </Field>
+          <fieldset className="sm:col-span-2">
+            <legend className="mb-2 text-sm font-semibold">Accepted payment methods</legend>
+            <div className="flex flex-wrap gap-2">
+              {METHODS.map((m) => (
+                <label key={m} className="flex items-center gap-2 rounded-lg border border-line px-3 py-2 text-sm has-[:checked]:border-primary has-[:checked]:bg-primary-light">
+                  <input
+                    type="checkbox"
+                    checked={methods.includes(m)}
+                    onChange={(e) => setMethods((xs) => (e.target.checked ? [...xs, m] : xs.filter((x) => x !== m)))}
+                    className="size-4 accent-primary"
+                  />
+                  {METHOD_LABEL[m]}
+                </label>
+              ))}
+            </div>
+          </fieldset>
         </CardBody>
       </Card>
 

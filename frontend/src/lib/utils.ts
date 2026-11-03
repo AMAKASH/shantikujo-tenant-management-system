@@ -37,6 +37,13 @@ export function todayISO() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Dhaka" }).format(new Date());
 }
 
+/** 1 → "1st", 10 → "10th", 22 → "22nd". */
+export function ordinal(n: number) {
+  const t = n % 100;
+  if (t >= 11 && t <= 13) return `${n}th`;
+  return `${n}${["th", "st", "nd", "rd"][n % 10] ?? "th"}`;
+}
+
 export const currentPeriod = () => todayISO().slice(0, 7);
 
 export const PERIOD_RE = /^\d{4}-(0[1-9]|1[0-2])$/;

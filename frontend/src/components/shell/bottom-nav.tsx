@@ -28,7 +28,7 @@ export function BottomNav() {
     <>
       <nav
         aria-label="Main"
-        className="fixed inset-x-0 bottom-0 z-40 flex border-t border-line bg-white/95 pb-safe backdrop-blur lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 flex print:hidden border-t border-line bg-white/95 pb-safe backdrop-blur lg:hidden"
       >
         {primary.map((n) => {
           const on = n.href === active;

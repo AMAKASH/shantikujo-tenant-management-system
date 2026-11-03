@@ -10,7 +10,7 @@ export function Sidebar({ propertyName }: { propertyName: string }) {
   const pathname = usePathname();
   const active = activeHref(pathname);
   return (
-    <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-line bg-white lg:flex">
+    <aside className="sticky top-0 hidden print:hidden h-dvh w-64 shrink-0 flex-col border-r border-line bg-white lg:flex">
       <div className="px-5 pt-6 pb-5">
         <Link href="/dashboard" aria-label="STMS home">
           <Logo />

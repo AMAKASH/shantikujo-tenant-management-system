@@ -178,7 +178,7 @@ export interface Invoice {
   total: number;
   paidAmount: number;
   balance: number;
-  tenant: { id: string; fullName: string; phone: string };
+  tenant: { id: string; fullName: string; phone: string; email: string | null };
   apartment: { id: string; number: string };
   leaseId: string;
   lines: InvoiceLine[];
@@ -274,6 +274,10 @@ export interface Settings {
   receiptPrefix: string;
   defaultNoticeMonths: number;
   currency: string;
+  contactPhone: string;
+  contactEmail: string;
+  invoiceNote: string;
+  paymentMethods: PaymentMethod[];
   storage: "s3" | "local";
   electricity: {
     slabs: { upTo: number | null; rate: number }[];

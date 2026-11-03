@@ -10,6 +10,11 @@ export interface AppSettings {
   receiptPrefix: string;
   defaultNoticeMonths: number;
   currency: string;
+  /** Shown on printed invoices. */
+  contactPhone: string;
+  contactEmail: string;
+  invoiceNote: string;
+  paymentMethods: string[];
   electricity: {
     slabs: SlabRow[];
     demandCharge: number;
@@ -27,6 +32,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
   receiptPrefix: "RCT",
   defaultNoticeMonths: 2,
   currency: "BDT",
+  contactPhone: "",
+  contactEmail: "",
+  invoiceNote: "Please make the payment by the due date to avoid further charges.",
+  paymentMethods: ["BANK", "BKASH", "CASH"],
   // Default: BD residential (LT-A) style slabs. Editable in Settings; verify against the current tariff.
   electricity: {
     slabs: [

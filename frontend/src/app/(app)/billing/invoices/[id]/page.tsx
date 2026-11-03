@@ -3,12 +3,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { InvoiceActions, RemoveLineButton } from "@/components/forms/invoice-actions";
 import { LogoMark } from "@/components/logo";
+import { PrintInvoice } from "@/components/print-invoice";
 import { Alert } from "@/components/ui/alert";
 import { InvoiceStatusBadge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { api, apiOrNull } from "@/lib/api.server";
 import type { Invoice, Settings } from "@/lib/types";
-import { formatDate, METHOD_LABEL, periodLabel, taka } from "@/lib/utils";
+import { formatDate, METHOD_LABEL, ordinal, periodLabel, taka } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Invoice" };
 
@@ -18,7 +19,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   if (!inv) notFound();
 
   return (
-    <div className="max-w-3xl">
+    <div className="max-w-3xl print:max-w-none">
       <div className="mb-4 flex flex-col gap-3 print:hidden sm:flex-row sm:items-center sm:justify-between">
         <Link href={`/billing?period=${inv.period}`} className="text-sm font-semibold text-muted hover:text-primary">
           ← {periodLabel(inv.period, true)} invoices
@@ -27,12 +28,12 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
       </div>
 
       {inv.status === "VOID" && (
-        <Alert tone="error" className="mb-4">
+        <Alert tone="error" className="mb-4 print:hidden">
           This invoice is void{inv.voidReason ? `: ${inv.voidReason}` : ""}.
         </Alert>
       )}
 
-      <Card className="overflow-hidden print:border-0 print:shadow-none">
+      <Card className="overflow-hidden print:hidden">
         <div className="flex flex-col gap-4 bg-primary px-5 py-5 text-white sm:flex-row sm:items-start sm:justify-between sm:px-7">
           <div className="flex items-center gap-3">
             <LogoMark className="h-10 w-11" inverted />
@@ -123,7 +124,8 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
           </div>
         )}
       </Card>
-      <p className="mt-4 text-center text-xs text-muted">Rent is due by the {settings.dueDay}th of each month.</p>
+      <p className="mt-4 text-center text-xs text-muted print:hidden">Rent is due by the {ordinal(settings.dueDay)} of each month.</p>
+      <PrintInvoice inv={inv} settings={settings} />
     </div>
   );
 }
