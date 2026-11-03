@@ -59,6 +59,15 @@ Sign in with `ADMIN_EMAIL` / `ADMIN_PASSWORD` from `backend/.env`.
 | typecheck | `npm run typecheck` | `npm run typecheck` |
 | DB | `db:migrate`, `db:deploy`, `db:seed`, `db:studio` | |
 
+## Installable app (PWA)
+
+The frontend is a Progressive Web App. It can be installed from Chrome or Edge on Android and desktop (the **Install app** item in the user menu or the **More** sheet), or from Safari on iPhone/iPad (**Share → Add to Home Screen**). It opens full screen with the STMS icon.
+
+- **Privacy:** the service worker ([frontend/public/sw.js](frontend/public/sw.js)) caches only hashed build assets and icons. Pages and `/api` responses are never stored on the device. With no connection the app shows an offline screen and an "offline" banner.
+- **Service worker scope:** it registers only in production builds (`npm run build && npm start`, or the Docker image). To try it in dev, set `NEXT_PUBLIC_SW_DEV=true`.
+- **Updates:** when a new version is deployed, users see a "new version is ready" prompt with a Reload button. Bump `VERSION` in `sw.js` to clear old caches.
+- **HTTPS:** installing requires HTTPS (or `localhost`).
+
 ## Docker images
 
 Each project has its own Dockerfile. Both images are multi-stage builds on `node:22-alpine`, run as a non-root user, and include a healthcheck.

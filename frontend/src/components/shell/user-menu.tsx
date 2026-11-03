@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, LogOut, Settings } from "lucide-react";
+import { InstallAppButton } from "@/components/pwa/install-button";
 import { Avatar } from "@/components/ui/misc";
 import type { SessionUser } from "@/lib/types";
 
@@ -51,6 +52,7 @@ export function UserMenu({ user }: { user: SessionUser }) {
           <Link role="menuitem" href="/settings" onClick={() => setOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium hover:bg-primary-light">
             <Settings className="size-4" aria-hidden /> Settings
           </Link>
+          <InstallAppButton className="w-full px-4 py-2.5 text-sm font-medium hover:bg-primary-light [&_svg]:size-4" onDone={() => setOpen(false)} />
           <button role="menuitem" type="button" onClick={logout} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-danger hover:bg-danger-bg">
             <LogOut className="size-4" aria-hidden /> Sign out
           </button>

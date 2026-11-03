@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC = ["/login", "/styleguide"];
+const PUBLIC = ["/login", "/styleguide", "/offline"];
 
 /** Cheap gate: no session cookie means go to /login. The API still validates the session on every call. */
 export function middleware(req: NextRequest) {
@@ -16,6 +16,6 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  // Skip API proxy, Next internals and static files.
-  matcher: ["/((?!api|_next|icon.svg|favicon.ico|.*\\.(?:png|jpg|svg|webp)$).*)"],
+  // Skip the API proxy, Next internals, PWA files (service worker, manifest, icons) and static files.
+  matcher: ["/((?!api|_next|sw\\.js|manifest\\.webmanifest|icons/|icon\\.svg|favicon\\.ico|.*\\.(?:png|jpg|svg|webp)$).*)"],
 };

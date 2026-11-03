@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut, MoreHorizontal } from "lucide-react";
+import { InstallAppButton } from "@/components/pwa/install-button";
 import { Dialog } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { logout } from "./user-menu";
@@ -61,6 +62,7 @@ export function BottomNav() {
               {n.label}
             </Link>
           ))}
+          <InstallAppButton className="rounded-xl px-3 py-3 text-ink hover:bg-primary-light" onDone={() => setMore(false)} />
           <button
             type="button"
             onClick={logout}
