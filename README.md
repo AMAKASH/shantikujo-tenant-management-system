@@ -46,9 +46,20 @@ Sign in with `ADMIN_EMAIL` / `ADMIN_PASSWORD` from `backend/.env`.
 
 - On the **1st of each month** (Asia/Dhaka) the API creates one invoice per active lease, with rent and service charge. Generation is idempotent, also runs at startup, and can be triggered from **Billing → Generate invoices**.
 - Rent is **due on the 10th** (configurable in Settings). Unpaid bills after that date show as **Overdue**.
-- Recording a **meter reading** adds an electricity line to that month's invoice. The amount is entered manually; if it is left empty, it is estimated from the slab table in Settings.
+- Recording a **meter reading** adds an electricity line to that month's invoice. The amount can be typed in; if it is left empty, it is estimated from the electricity settings:
+  - **Flat rate** (on by default): up to 200 units, the bill is units × ৳8.50 with no demand charge or VAT.
+  - **Slab rates:** above that limit, the tiered slab table applies, plus the demand charge and VAT.
+
+  The limit, the flat rate and the slab table are all editable in **Settings**.
 - A **payment** is applied to the chosen invoice first, then to the oldest open invoices. Anything left over becomes advance credit, which is applied automatically to the next bill.
 - The first and last months of a lease are **prorated by days**. Voiding an invoice returns its payments to credit.
+- **Printing an invoice** (Print button, or the browser's Save as PDF) produces a one-page A4 layout, separate from the on-screen view. The office phone, office email, note and accepted payment methods on it come from **Settings → Printed invoice**.
+
+## Navigation speed
+
+- Every section has a `loading.tsx` skeleton, so a click shows the next page's outline at once while its data loads.
+- Links in the sidebar, the bottom bar and the Billing tabs use full prefetch. In production builds, their pages and data load in the background once the current page is idle.
+- The client router cache keeps prefetched pages for 2 minutes and visited pages for 30 seconds (`experimental.staleTimes` in [frontend/next.config.ts](frontend/next.config.ts)). Every save calls `router.refresh()`, which clears it, so stale data can only come from changes made on another device or by the monthly invoice job.
 
 ## Scripts
 
@@ -80,6 +91,12 @@ Each project has its own Dockerfile. Both images are multi-stage builds on `node
 **API environment:** `DATABASE_URL`, `SESSION_SECRET`, `APP_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME`, and `S3_*` (see [backend/.env.example](backend/.env.example)). `NODE_ENV=production` is set in the image, so cookies are `Secure`: serve the site over HTTPS.
 
 Only the web container needs a public domain. The browser never calls the API directly.
+
+**Secure cookies with an internal API address:**
+- The browser only ever talks to the HTTPS domain. Next.js forwards `/api/*` to Express over the private network.
+- Express sets `Secure` on the session cookie because `NODE_ENV=production`, not because of the connection it received. The browser then receives the cookie over HTTPS.
+- So point `INTERNAL_API_URL` at the API's internal service name (for example `http://<api-service-name>:4000`), not at the public domain. Routing it through the public domain adds a trip through the internet, the proxy and TLS on every server-side request.
+- To check after deploying, look for **Secure** on the `stms_session` cookie in DevTools.
 
 ## Deployment
 

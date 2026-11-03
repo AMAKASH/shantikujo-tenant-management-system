@@ -135,7 +135,7 @@ Priority: **M** = must (v1), **S** = should (v1 if time allows), **P2** = phase 
 | BILL-06 | Invoice status: **Unpaid**, **Partially paid**, **Paid**, **Overdue** (unpaid or partial after the due date), **Void**. | M |
 | BILL-07 | Record a payment: date, amount, method (Cash, Bank transfer, bKash, Nagad, Rocket, Cheque, Other), reference/TrxID, note. One payment can be allocated across several invoices, oldest first. | M |
 | BILL-08 | Overpayment is held as tenant **credit** and applied to the next invoice automatically. | S |
-| BILL-09 | Printable invoice and money receipt (A4 and mobile-friendly; PDF download). Sequential numbers (`INV-2026-0001`, `RCT-2026-0001`). | S |
+| BILL-09 | Printable invoice and money receipt (A4 and mobile-friendly; PDF download). Sequential numbers (`INV-2026-0001`, `RCT-2026-0001`). The printed invoice is a one-page branded A4 layout: tenant and invoice details, charges, totals with balance due, payments received, a note, accepted payment methods, and office contact details. | S |
 | BILL-10 | Late fee rule: a flat or percentage fee after N days past due. Off by default. | P2 |
 | BILL-11 | Every financial change is recorded in an audit log. Paid invoices cannot be edited, only voided with a reason. | M |
 
@@ -214,7 +214,7 @@ These features are common in rental/property management products (e.g. tenant le
 ### 3.7 Administration (ADM)
 | ID | Requirement | Pri |
 |---|---|---|
-| ADM-01 | Settings: property details, rent due day (default 10), invoice prefix, default notice period, electricity slab table, late fee rule, currency display. | M |
+| ADM-01 | Settings: property details, rent due day (default 10), invoice prefix, default notice period, electricity flat rate and slab table, printed-invoice details (office phone and email, note, accepted payment methods), late fee rule, currency display. | M |
 | ADM-02 | Audit log: who changed what and when, for financial records and tenant data. | M |
 | ADM-03 | Database backups (daily, through the hosting platform) and a CSV export of all data. | S |
 | ADM-04 | Additional staff users with roles. | F |
@@ -228,14 +228,14 @@ These features are common in rental/property management products (e.g. tenant le
 | ID | Category | Requirement |
 |---|---|---|
 | NFR-01 | **Mobile-first** | Every screen is fully usable from 360 px wide. Touch targets ≥ 44 px. Bottom navigation on mobile, sidebar on desktop. Tables become card lists on small screens. |
-| NFR-02 | Performance | First load (SSR) under 2.5 s LCP on 4G. Lighthouse Performance and Accessibility ≥ 90. API p95 < 300 ms for list endpoints with 1,000 tenants. |
+| NFR-02 | Performance | First load (SSR) under 2.5 s LCP on 4G. Lighthouse Performance and Accessibility ≥ 90. API p95 < 300 ms for list endpoints with 1,000 tenants. Navigation responds at once with a skeleton screen, and main navigation pages are prefetched in the background. |
 | NFR-03 | Security | Passwords hashed with argon2. httpOnly, Secure, SameSite=Lax cookies. Helmet security headers. Zod validation on every input. Rate limiting on auth. Parameterized queries (Prisma). |
 | NFR-04 | Privacy | NID and documents are personal data. The S3 bucket is private and accessed only through signed URLs (≤ 10 min expiry). NID is masked in lists (`••••••1234`). |
 | NFR-05 | Data integrity | Money is stored as `DECIMAL(12,2)`, never as floats. Financial writes run in database transactions. Invoices are idempotent per (lease, period). |
 | NFR-06 | Time | All dates are calculated in Asia/Dhaka. Billing periods use `YYYY-MM`. |
 | NFR-07 | Accessibility | WCAG 2.1 AA: colour contrast, keyboard navigation, form labels, focus states. |
 | NFR-08 | Usability | Core tasks take at most 3 taps from the dashboard: record payment, add tenant, enter reading. Forms save drafts and show clear inline errors. |
-| NFR-09 | Deployability | Deployable on **Dokploy** (packaging approach to be decided). Configuration through environment variables only. |
+| NFR-09 | Deployability | Deployable on **Dokploy** as two images (API and web), each with its own Dockerfile, plus PostgreSQL. Only the web app is public; it reaches the API over the internal network. Configuration through environment variables only. |
 | NFR-10 | Observability | Structured JSON logs. `/api/health` endpoint. Errors include a request ID. |
 | NFR-11 | Branding | The UI follows the *STMS Brand Style Guide Board*: Plus Jakarta Sans font, Primary `#0B2D6B`, Accent `#2563EB`, Primary Light `#E8F0FF`, Text `#1F2937`, Muted `#6B7280`, Border `#E5E7EB`, and outline icons. |
 
@@ -300,7 +300,7 @@ Derived values (never stored): apartment status, tenant balance (Σ invoice tota
 | Apartments list / new / detail / edit | `/apartments`, … | Card grid with status badges. |
 | Leases list / new / detail | `/leases`, `/leases/new`, `/leases/[id]` | Assign, notice, end. |
 | Billing | `/billing` | Invoices by month, generate, filter by status. |
-| Invoice detail | `/billing/invoices/[id]` | Lines, payments, print. |
+| Invoice detail | `/billing/invoices/[id]` | Lines, payments, print (one-page A4 layout). |
 | Record payment | `/billing/payments/new` | Pre-filled from tenant/invoice. |
 | Meter readings | `/billing/meter-readings` | Bulk monthly entry. |
 | Reports | `/reports` | Monthly income, dues, ledger, aging. |
@@ -326,5 +326,5 @@ Mobile navigation (bottom bar): **Home · Tenants · Apartments · Billing · Mo
 1. One building at launch. Is the building name/address "Shantikunjo Residency, 123 Shantikunjo Road" from the style guide real or a placeholder?
 2. S3 bucket details will be provided by the owner (AWS S3 or an S3-compatible service).
 3. Is the security deposit expressed as a fixed amount or as a number of months' rent? (Stored as an amount; the UI can offer "× months" as a helper.)
-4. Which electricity slab table applies (DESCO / DPDC / BPDB residential)? A default can be pre-loaded and then edited.
+4. Which electricity slab table applies (DESCO / DPDC / BPDB residential)? A default can be pre-loaded and then edited. *Update:* low usage (≤ 200 units) is billed at a flat ৳8.50/unit with no demand charge or VAT (ELEC-05a). With the default rates, 200 units on the flat rate (৳1,700) costs more than 201 units on the slabs (৳1,411.29). Confirm that this is intended.
 5. Is rent billed in advance (the month's rent due on the 10th of the same month)? This document assumes **yes**.
