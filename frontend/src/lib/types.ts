@@ -275,7 +275,12 @@ export interface Settings {
   defaultNoticeMonths: number;
   currency: string;
   storage: "s3" | "local";
-  electricity: { slabs: { upTo: number | null; rate: number }[]; demandCharge: number; vatPercent: number };
+  electricity: {
+    slabs: { upTo: number | null; rate: number }[];
+    demandCharge: number;
+    vatPercent: number;
+    flatRate: { enabled: boolean; maxUnits: number; rate: number };
+  };
 }
 
 export interface SessionUser {

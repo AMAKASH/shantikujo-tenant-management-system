@@ -13,6 +13,7 @@ import type { Settings } from "@/lib/types";
 export function SettingsForm({ settings }: { settings: Settings }) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [flatEnabled, setFlatEnabled] = useState(settings.electricity.flatRate?.enabled ?? false);
   const [slabs, setSlabs] = useState(settings.electricity.slabs.map((s) => ({ upTo: s.upTo == null ? "" : String(s.upTo), rate: String(s.rate) })));
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -33,6 +34,11 @@ export function SettingsForm({ settings }: { settings: Settings }) {
             slabs: slabs.map((s, i) => ({ upTo: i === slabs.length - 1 || s.upTo === "" ? null : Number(s.upTo), rate: Number(s.rate) })),
             demandCharge: Number(f.get("demandCharge")),
             vatPercent: Number(f.get("vatPercent")),
+            flatRate: {
+              enabled: flatEnabled,
+              maxUnits: Number(f.get("flatMaxUnits") ?? settings.electricity.flatRate?.maxUnits ?? 200),
+              rate: Number(f.get("flatRate") ?? settings.electricity.flatRate?.rate ?? 8.5),
+            },
           },
         },
       });
@@ -74,6 +80,27 @@ export function SettingsForm({ settings }: { settings: Settings }) {
           <Field label="Receipt prefix" htmlFor="receiptPrefix">
             <Input id="receiptPrefix" name="receiptPrefix" defaultValue={settings.receiptPrefix} maxLength={6} className="uppercase" />
           </Field>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader
+          title="Electricity flat rate"
+          description="For low usage: bills at or below the unit limit are charged units × flat rate, with no demand charge or VAT. Above the limit, the slab rates below apply."
+        />
+        <CardBody className="flex flex-col gap-4">
+          <label className="flex items-center gap-2 text-sm font-medium">
+            <input type="checkbox" checked={flatEnabled} onChange={(e) => setFlatEnabled(e.target.checked)} className="size-5 accent-primary" />
+            Use a flat rate for low usage
+          </label>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Up to (units)" htmlFor="flatMaxUnits" hint="Inclusive">
+              <Input id="flatMaxUnits" name="flatMaxUnits" type="number" min={0} step="1" defaultValue={settings.electricity.flatRate?.maxUnits ?? 200} disabled={!flatEnabled} required />
+            </Field>
+            <Field label="Flat rate per unit" htmlFor="flatRate">
+              <Input id="flatRate" name="flatRate" prefix="৳" type="number" min={0} step="0.01" defaultValue={settings.electricity.flatRate?.rate ?? 8.5} disabled={!flatEnabled} required />
+            </Field>
+          </div>
         </CardBody>
       </Card>
 

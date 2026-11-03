@@ -27,6 +27,13 @@ const schema = z.object({
       .max(12),
     demandCharge: z.coerce.number().min(0),
     vatPercent: z.coerce.number().min(0).max(100),
+    flatRate: z
+      .object({
+        enabled: z.boolean(),
+        maxUnits: z.coerce.number().min(0).max(100_000),
+        rate: z.coerce.number().min(0),
+      })
+      .optional(),
   }),
 });
 

@@ -119,6 +119,7 @@ Priority: **M** = must (v1), **S** = should (v1 if time allows), **P2** = phase 
 | ELEC-03 | The current reading must be ≥ the previous reading, unless a meter reset is marked. | M |
 | ELEC-04 | The electricity charge is added to that month's invoice as its own line, showing units and amount. | M |
 | ELEC-05 | **Slab calculator**: a configurable slab table (units range → rate per unit, plus demand charge and VAT %). It suggests an amount that the admin can override. | S |
+| ELEC-05a | **Low-usage flat rate** (configurable, on by default): if a month's units are at or below the limit (default 200), the bill is units × flat rate (default ৳8.50) with **no demand charge or VAT**. Above the limit, the full slab calculation applies. | S |
 | ELEC-06 | Bulk entry screen: all occupied apartments in one list for fast monthly entry on a phone. | S |
 | ELEC-07 | Tenants submit their own reading with a meter photo, and the admin approves it. | P2 |
 

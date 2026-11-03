@@ -102,7 +102,7 @@ function MeterRow({ period, row, electricity }: { period: string; row: SheetRow;
               inputMode="decimal"
               step="0.01"
               min={0}
-              placeholder={estimate != null ? String(estimate) : ""}
+              placeholder={estimate != null ? String(estimate.total) : ""}
               value={amount}
               onChange={(e) => {
                 setAmount(e.target.value);
@@ -124,7 +124,7 @@ function MeterRow({ period, row, electricity }: { period: string; row: SheetRow;
             {invalid
               ? "Lower than the previous reading. Tick 'meter reset' if it was replaced."
               : units != null
-                ? `${number(units)} units${amount === "" && estimate != null ? ` · slab estimate ${taka(estimate)}` : ""}`
+                ? `${number(units)} units${amount === "" && estimate != null ? ` · ${estimate.mode === "flat" ? "flat-rate" : "slab"} estimate ${taka(estimate.total)}` : ""}`
                 : "Enter the current reading"}
           </span>
           <label className="flex items-center gap-1.5 text-muted">
