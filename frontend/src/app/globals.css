@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+/* STMS brand tokens: docs/STMS Brand Style Guide Board.png */
+@theme {
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+
+  --color-primary: #0b2d6b;
+  --color-primary-hover: #0a2659;
+  --color-accent: #2563eb;
+  --color-accent-hover: #1d4ed8;
+  --color-primary-light: #e8f0ff;
+  --color-ink: #1f2937;
+  --color-muted: #6b7280;
+  --color-line: #e5e7eb;
+  --color-canvas: #f7f9fc;
+  --color-surface: #ffffff;
+
+  --color-success: #15803d;
+  --color-success-bg: #e9f7ee;
+  --color-danger: #dc2626;
+  --color-danger-bg: #fdecec;
+  --color-warning: #b45309;
+  --color-warning-bg: #fff4e5;
+
+  /* Chart series: validated with the dataviz palette checker (light surface). */
+  --color-series-1: #1d4ed8;
+  --color-series-2: #5b8def;
+
+  --radius-card: 14px;
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.06);
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-canvas text-ink antialiased;
+    font-feature-settings: "tnum" 0;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-accent;
+  }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@utility pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 0px);
+}
