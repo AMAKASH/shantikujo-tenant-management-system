@@ -27,6 +27,7 @@ export function Sidebar({ propertyName }: { propertyName: string }) {
             <Link
               key={item.href}
               href={item.href}
+              prefetch
               aria-current={on ? "page" : undefined}
               className={cn(
                 "flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-semibold transition-colors",

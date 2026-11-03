@@ -33,7 +33,7 @@ export function BottomNav() {
         {primary.map((n) => {
           const on = n.href === active;
           return (
-            <Link key={n.href} href={n.href} className={item(on)} aria-current={on ? "page" : undefined}>
+            <Link key={n.href} href={n.href} prefetch className={item(on)} aria-current={on ? "page" : undefined}>
               <span className={cn("grid h-7 w-12 place-items-center rounded-full", on && "bg-primary-light")}>
                 <n.icon className="size-5" aria-hidden />
               </span>

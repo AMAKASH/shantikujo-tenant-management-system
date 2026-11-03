@@ -20,6 +20,7 @@ export function BillingTabs() {
           <Link
             key={t.href}
             href={t.href}
+            prefetch
             aria-current={on ? "page" : undefined}
             className={cn(
               "-mb-px border-b-2 px-3 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors",
