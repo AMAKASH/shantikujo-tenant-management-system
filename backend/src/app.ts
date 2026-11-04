@@ -17,6 +17,7 @@ import { leasesRouter } from "./modules/leases/routes.js";
 import { meterReadingsRouter } from "./modules/meter-readings/routes.js";
 import { paymentsRouter } from "./modules/payments/routes.js";
 import { reportsRouter } from "./modules/reports/routes.js";
+import { smsRouter } from "./modules/sms/routes.js";
 import { settingsRouter } from "./modules/settings/routes.js";
 import { tenantsRouter } from "./modules/tenants/routes.js";
 
@@ -66,6 +67,7 @@ export function createApp() {
   admin.use("/meter-readings", meterReadingsRouter);
   admin.use("/reports", reportsRouter);
   admin.use("/settings", settingsRouter);
+  admin.use("/sms", smsRouter);
   admin.use("/", documentsRouter);
   api.use(admin);
 

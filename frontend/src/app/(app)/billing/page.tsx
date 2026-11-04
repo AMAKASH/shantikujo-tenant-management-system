@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronRight, Receipt } from "lucide-react";
 import { GenerateInvoicesButton } from "@/components/forms/generate-invoices";
+import { NotifiedBadge, NotifyTenantsButton } from "@/components/forms/notify-dialog";
 import { RecordPaymentButton } from "@/components/forms/payment-dialog";
 import { InvoiceStatusBadge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -29,6 +30,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
         <MonthPicker period={period} href={(p) => link(p)} />
         <div className="flex flex-wrap gap-2">
           <GenerateInvoicesButton period={period} />
+          <NotifyTenantsButton invoices={items} period={period} />
           <RecordPaymentButton />
         </div>
       </div>
@@ -73,7 +75,8 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     <p className="tabular font-bold">{taka(i.total)}</p>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center justify-end gap-1.5">
+                      {i.notifiedAt && <NotifiedBadge at={i.notifiedAt} />}
                       {i.balance > 0 && i.status !== "VOID" && i.status !== "UNPAID" && (
                         <span className="tabular hidden text-xs text-muted sm:inline">{taka(i.balance)} left</span>
                       )}

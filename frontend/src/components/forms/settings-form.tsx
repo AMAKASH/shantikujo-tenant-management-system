@@ -17,6 +17,8 @@ export function SettingsForm({ settings }: { settings: Settings }) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [methods, setMethods] = useState<PaymentMethod[]>(settings.paymentMethods ?? []);
+  const [smsTemplate, setSmsTemplate] = useState(settings.smsTemplate ?? "");
+  const smsChars = [...smsTemplate].length;
   const [flatEnabled, setFlatEnabled] = useState(settings.electricity.flatRate?.enabled ?? false);
   const [slabs, setSlabs] = useState(settings.electricity.slabs.map((s) => ({ upTo: s.upTo == null ? "" : String(s.upTo), rate: String(s.rate) })));
 
@@ -37,6 +39,7 @@ export function SettingsForm({ settings }: { settings: Settings }) {
           contactPhone: f.get("contactPhone"),
           contactEmail: f.get("contactEmail"),
           invoiceNote: f.get("invoiceNote"),
+          smsTemplate: smsTemplate,
           paymentMethods: METHODS.filter((m) => methods.includes(m)),
           electricity: {
             slabs: slabs.map((s, i) => ({ upTo: i === slabs.length - 1 || s.upTo === "" ? null : Number(s.upTo), rate: Number(s.rate) })),
@@ -119,6 +122,29 @@ export function SettingsForm({ settings }: { settings: Settings }) {
               ))}
             </div>
           </fieldset>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader
+          title="Bill SMS message"
+          description="Sent from Billing → Invoices → Notify tenants. {month}, {amount} and {dueDay} are filled in with Bangla words and digits; {amount} is the balance still due."
+        />
+        <CardBody className="flex flex-col gap-2">
+          <Textarea
+            id="smsTemplate"
+            lang="bn"
+            rows={9}
+            maxLength={1000}
+            value={smsTemplate}
+            onChange={(e) => setSmsTemplate(e.target.value)}
+            required
+            aria-describedby="smsTemplateHint"
+          />
+          <p id="smsTemplateHint" className="text-xs text-muted">
+            {smsChars} characters before filling in · about {smsChars <= 70 ? 1 : Math.ceil(smsChars / 67)} SMS parts per tenant (Bangla SMS: 70 characters per part)
+            {!smsTemplate.includes("{amount}") && <span className="ml-1 font-semibold text-danger">· must include {"{amount}"}</span>}
+          </p>
         </CardBody>
       </Card>
 

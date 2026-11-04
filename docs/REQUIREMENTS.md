@@ -193,6 +193,7 @@ These features are common in rental/property management products (e.g. tenant le
 |---|---|---|
 | NOT-01 | In-app notification centre (bell icon): overdue invoices, leases ending, missing documents. | S |
 | NOT-02 | SMS reminders through a BD SMS gateway: invoice issued, 2 days before the due date, overdue. Templates are editable. | P2 |
+| NOT-02a | **Manual bill SMS** (bulksmsbd.net): on Billing → Invoices, **Notify tenants** opens a checklist of the month's unpaid, partial and overdue invoices. The admin ticks tenants and sends a Bangla SMS quoting the **balance still due**. Every attempt is logged (sent or failed, with the provider code); notified invoices show a **Notified** badge and can be re-sent. The template is editable in Settings (`{month}`, `{amount}`, `{dueDay}`). Outside production, every SMS goes to a fixed test number. | S |
 | NOT-03 | Email copies of invoices and receipts. | P2 |
 
 ### 3.5 Tenant portal (PORT)

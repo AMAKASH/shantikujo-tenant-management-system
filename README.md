@@ -55,6 +55,23 @@ Sign in with `ADMIN_EMAIL` / `ADMIN_PASSWORD` from `backend/.env`.
 - The first and last months of a lease are **prorated by days**. Voiding an invoice returns its payments to credit.
 - **Printing an invoice** (Print button, or the browser's Save as PDF) produces a one-page A4 layout, separate from the on-screen view. The office phone, office email, note and accepted payment methods on it come from **Settings → Printed invoice**.
 
+## SMS notifications
+
+**Billing → Invoices → Notify tenants** sends tenants a Bangla bill SMS through [bulksmsbd.net](http://bulksmsbd.net).
+
+- **What gets sent:**
+  - Only unpaid, partial and overdue invoices are listed.
+  - The SMS quotes the **balance still due**.
+  - Invoices that were already sent an SMS show a **Notified** badge. They start unticked, but can be sent again.
+- **Message template:** edit it in **Settings → Bill SMS message**. The placeholders `{month}`, `{amount}` and `{dueDay}` are filled in with Bangla words and digits. Bangla SMS is billed per 70 characters, so the default message costs about **4 SMS parts per tenant**.
+- **Configuration:** set `SMS_API_KEY` and `SMS_SENDER_ID` in `backend/.env`, or in the API environment on Dokploy. While these are empty, the button shows "SMS is not set up" and nothing is sent.
+  - Optional overrides: `SMS_API_URL` and `SMS_BALANCE_URL`.
+  - The provider may require the **server's IP to be whitelisted**; otherwise it returns error 1032.
+- **Development safety:** when `NODE_ENV` isn't `production`, every SMS goes to the test number `01973054376` (`DEV_SMS_NUMBER` in [backend/src/lib/sms.ts](backend/src/lib/sms.ts)), never to tenants.
+- **Records and errors:**
+  - Every attempt is stored in `InvoiceNotification`: the number, the text, the amount, SENT or FAILED, and the provider code. Each batch is also written to the audit log.
+  - Provider error codes such as 1007 (insufficient balance) are shown in plain words in the dialog.
+
 ## Navigation speed
 
 - Every section has a `loading.tsx` skeleton, so a click shows the next page's outline at once while its data loads.

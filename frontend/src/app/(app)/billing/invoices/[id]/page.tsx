@@ -9,7 +9,7 @@ import { InvoiceStatusBadge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { api, apiOrNull } from "@/lib/api.server";
 import type { Invoice, Settings } from "@/lib/types";
-import { formatDate, METHOD_LABEL, ordinal, periodLabel, taka } from "@/lib/utils";
+import { dhakaDay, formatDate, METHOD_LABEL, ordinal, periodLabel, taka } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Invoice" };
 
@@ -67,6 +67,12 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
             <p className="text-xs font-semibold text-muted uppercase">Due date</p>
             <p className="font-bold">{formatDate(inv.dueDate)}</p>
             <InvoiceStatusBadge status={inv.displayStatus} />
+            {inv.notifiedAt && (
+              <p className="mt-1 text-xs text-muted">
+                SMS sent {formatDate(dhakaDay(inv.notifiedAt))}
+                {inv.notifyCount > 1 ? ` · ${inv.notifyCount} times` : ""}
+              </p>
+            )}
           </div>
         </div>
 

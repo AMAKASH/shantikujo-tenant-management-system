@@ -15,6 +15,8 @@ export interface AppSettings {
   contactEmail: string;
   invoiceNote: string;
   paymentMethods: string[];
+  /** Bill SMS. Placeholders: {month}, {amount}, {dueDay}. */
+  smsTemplate: string;
   electricity: {
     slabs: SlabRow[];
     demandCharge: number;
@@ -36,6 +38,18 @@ export const DEFAULT_SETTINGS: AppSettings = {
   contactEmail: "",
   invoiceNote: "Please make the payment by the due date to avoid further charges.",
   paymentMethods: ["BANK", "BKASH", "CASH"],
+  smsTemplate: [
+    "আপনার {month} মাসের বিদ্যুৎ বিলসহ সর্বমোট বাসা ভাড়া {amount} টাকা।",
+    "",
+    "অনুগ্রহপূর্বক প্রতি মাসের {dueDay} তারিখের মধ্যে বাসা ভাড়া ও অন্যান্য বিল পরিশোধ করার জন্য অনুরোধ করা হলো।",
+    "",
+    "ধন্যবাদান্তে,",
+    "",
+    "শান্তিকুঞ্জ",
+    "",
+    "বাসা নং ২৭, রোড নং ৫, ব্লক ডি",
+    "ঢাকা উদ্যান, ঢাকা।",
+  ].join("\n"),
   // Default: BD residential (LT-A) style slabs. Editable in Settings; verify against the current tariff.
   electricity: {
     slabs: [

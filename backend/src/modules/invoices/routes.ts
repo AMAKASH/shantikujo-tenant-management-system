@@ -5,6 +5,9 @@ import { audit } from "../../lib/audit.js";
 import { currentPeriod, PERIOD_RE, today } from "../../lib/dates.js";
 import { badRequest, body, conflict, notFound, param, query } from "../../lib/http.js";
 import { prisma } from "../../lib/prisma.js";
+import { isProd } from "../../config.js";
+import { getSettings } from "../../lib/settings.js";
+import { deliveryNumber, DEV_SMS_NUMBER, normalizeBdPhone, renderSms, sendMany, smsConfigured, smsParts } from "../../lib/sms.js";
 import { applyCredit, generateForPeriod, invoiceInclude, recalcInvoice, serializeInvoice } from "./service.js";
 
 export const invoicesRouter = Router();
@@ -54,6 +57,103 @@ invoicesRouter.post("/generate", async (req, res) => {
   const result = await generateForPeriod(p);
   await audit(req.user?.id, "generate", "Invoice", undefined, result);
   res.json(result);
+});
+
+// ───────── SMS bill notifications (registered before /:id) ─────────
+
+const smsInvoiceInclude = {
+  tenant: { select: { id: true, fullName: true, phone: true } },
+} satisfies Prisma.InvoiceInclude;
+
+const balanceOf = (inv: { total: Prisma.Decimal; paidAmount: Prisma.Decimal }) =>
+  Math.round((Number(inv.total) - Number(inv.paidAmount)) * 100) / 100;
+
+invoicesRouter.get("/notify/preview", async (req, res) => {
+  const { invoiceId } = query(req, z.object({ invoiceId: z.string().min(1) }));
+  const inv = await prisma.invoice.findUnique({ where: { id: invoiceId } });
+  if (!inv) throw notFound("Invoice not found");
+  const s = await getSettings();
+  const message = renderSms(s.smsTemplate, { period: inv.period, amount: balanceOf(inv), dueDay: s.dueDay });
+  res.json({ message, characters: [...message].length, parts: smsParts(message) });
+});
+
+invoicesRouter.post("/notify", async (req, res) => {
+  const { invoiceIds } = body(req, z.object({ invoiceIds: z.array(z.string().min(1)).min(1).max(200) }));
+  if (!smsConfigured()) {
+    res.status(503).json({ error: "SMS is not configured. Add SMS_API_KEY and SMS_SENDER_ID to the API environment." });
+    return;
+  }
+  const s = await getSettings();
+  const invoices = await prisma.invoice.findMany({ where: { id: { in: [...new Set(invoiceIds)] } }, include: smsInvoiceInclude });
+
+  type Row = { invoiceId: string; tenantId: string; phone: string; sentTo: string; message: string; amount: number };
+  const toSend: Row[] = [];
+  const results: { invoiceId: string; tenantName: string; status: "SENT" | "FAILED" | "SKIPPED"; error?: string }[] = [];
+  const failedRows: (Row & { error: string })[] = [];
+
+  for (const id of invoiceIds) if (!invoices.some((i) => i.id === id)) results.push({ invoiceId: id, tenantName: "", status: "SKIPPED", error: "Invoice not found" });
+
+  for (const inv of invoices) {
+    const amount = balanceOf(inv);
+    const base = { invoiceId: inv.id, tenantName: inv.tenant.fullName };
+    if (inv.status === "VOID" || inv.status === "PAID" || amount <= 0) {
+      results.push({ ...base, status: "SKIPPED", error: inv.status === "VOID" ? "Invoice is void" : "Nothing left to pay" });
+      continue;
+    }
+    const message = renderSms(s.smsTemplate, { period: inv.period, amount, dueDay: s.dueDay });
+    const phone = normalizeBdPhone(inv.tenant.phone);
+    if (!phone) {
+      failedRows.push({ invoiceId: inv.id, tenantId: inv.tenantId, phone: inv.tenant.phone, sentTo: "", message, amount, error: "Tenant's phone number is not a valid Bangladeshi mobile number" });
+      results.push({ ...base, status: "FAILED", error: "Invalid phone number" });
+      continue;
+    }
+    toSend.push({ invoiceId: inv.id, tenantId: inv.tenantId, phone, sentTo: deliveryNumber(phone), message, amount });
+  }
+
+  const gateway = toSend.length ? await sendMany(toSend.map((r) => ({ to: r.sentTo, message: r.message }))) : null;
+
+  await prisma.$transaction([
+    ...toSend.map((r) =>
+      prisma.invoiceNotification.create({
+        data: {
+          invoiceId: r.invoiceId,
+          tenantId: r.tenantId,
+          phone: r.phone,
+          sentTo: r.sentTo,
+          message: r.message,
+          amount: r.amount,
+          status: gateway?.ok ? "SENT" : "FAILED",
+          providerCode: gateway?.code,
+          error: gateway?.ok ? null : gateway?.error,
+          sentById: req.user?.id,
+        },
+      }),
+    ),
+    ...failedRows.map((r) =>
+      prisma.invoiceNotification.create({
+        data: {
+          invoiceId: r.invoiceId,
+          tenantId: r.tenantId,
+          phone: r.phone,
+          sentTo: r.sentTo,
+          message: r.message,
+          amount: r.amount,
+          status: "FAILED",
+          error: r.error,
+          sentById: req.user?.id,
+        },
+      }),
+    ),
+  ]);
+
+  for (const r of toSend) {
+    const name = invoices.find((i) => i.id === r.invoiceId)!.tenant.fullName;
+    results.push(gateway?.ok ? { invoiceId: r.invoiceId, tenantName: name, status: "SENT" } : { invoiceId: r.invoiceId, tenantName: name, status: "FAILED", error: gateway?.error ?? "Not sent" });
+  }
+  const count = (st: string) => results.filter((r) => r.status === st).length;
+  const summary = { sent: count("SENT"), failed: count("FAILED"), skipped: count("SKIPPED") };
+  await audit(req.user?.id, "notify", "Invoice", undefined, { ...summary, invoiceIds, devOverride: !isProd });
+  res.json({ ...summary, devOverride: !isProd, devNumber: isProd ? null : DEV_SMS_NUMBER, gatewayError: gateway?.ok === false ? gateway.error : null, results });
 });
 
 invoicesRouter.get("/:id", async (req, res) => {

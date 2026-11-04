@@ -183,6 +183,26 @@ export interface Invoice {
   leaseId: string;
   lines: InvoiceLine[];
   payments: { id: string; number: string; date: string; method: PaymentMethod; reference: string | null; amount: number }[];
+  /** When the latest bill SMS was sent (null if never). */
+  notifiedAt: string | null;
+  notifyCount: number;
+}
+
+export interface SmsStatus {
+  configured: boolean;
+  devOverride: boolean;
+  devNumber: string | null;
+  balance: number | null;
+}
+
+export interface NotifyResult {
+  sent: number;
+  failed: number;
+  skipped: number;
+  devOverride: boolean;
+  devNumber: string | null;
+  gatewayError: string | null;
+  results: { invoiceId: string; tenantName: string; status: "SENT" | "FAILED" | "SKIPPED"; error?: string }[];
 }
 
 export interface Payment {
@@ -278,6 +298,7 @@ export interface Settings {
   contactEmail: string;
   invoiceNote: string;
   paymentMethods: PaymentMethod[];
+  smsTemplate: string;
   storage: "s3" | "local";
   electricity: {
     slabs: { upTo: number | null; rate: number }[];

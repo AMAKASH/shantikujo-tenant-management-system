@@ -172,6 +172,8 @@ export const invoiceInclude = {
   allocations: {
     include: { payment: { select: { id: true, number: true, date: true, method: true, reference: true } } },
   },
+  notifications: { where: { status: "SENT" }, orderBy: { createdAt: "desc" }, take: 1, select: { createdAt: true } },
+  _count: { select: { notifications: { where: { status: "SENT" } } } },
 } satisfies Prisma.InvoiceInclude;
 
 type FullInvoice = Prisma.InvoiceGetPayload<{ include: typeof invoiceInclude }>;
@@ -196,6 +198,8 @@ export function serializeInvoice(inv: FullInvoice) {
     leaseId: inv.lease.id,
     lines: inv.lines.map((l) => ({ ...l, amount: Number(l.amount) })),
     payments: inv.allocations.map((a) => ({ ...a.payment, amount: Number(a.amount) })),
+    notifiedAt: inv.notifications[0]?.createdAt.toISOString() ?? null,
+    notifyCount: inv._count.notifications,
   };
 }
 

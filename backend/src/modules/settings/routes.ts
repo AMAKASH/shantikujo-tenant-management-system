@@ -23,6 +23,12 @@ const schema = z.object({
   contactPhone: z.string().trim().max(40),
   contactEmail: z.union([z.literal(""), z.string().trim().email()]),
   invoiceNote: z.string().trim().max(400),
+  smsTemplate: z
+    .string()
+    .trim()
+    .min(1)
+    .max(1000)
+    .refine((t) => t.includes("{amount}"), "The SMS message must include {amount}"),
   paymentMethods: z.array(z.enum(["CASH", "BANK", "BKASH", "NAGAD", "ROCKET", "CHEQUE", "OTHER"])).max(7),
   electricity: z.object({
     slabs: z

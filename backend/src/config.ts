@@ -18,6 +18,11 @@ const schema = z.object({
     .string()
     .optional()
     .transform((v) => v === "true"),
+  // bulksmsbd.net. SMS is disabled while SMS_API_KEY is empty.
+  SMS_API_KEY: z.string().optional().default(""),
+  SMS_SENDER_ID: z.string().optional().default(""),
+  SMS_API_URL: z.string().url().default("http://bulksmsbd.net/api/smsapimany"),
+  SMS_BALANCE_URL: z.string().url().default("http://bulksmsbd.net/api/getBalanceApi"),
   ENABLE_CRON: z
     .string()
     .optional()
