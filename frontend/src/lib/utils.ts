@@ -11,8 +11,10 @@ const nf2 = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2, minimumFr
 /** BDT amount: whole amounts without decimals (৳12,000), anything with paisa always shows two (৳12,807.50). */
 export const taka = (n: number | null | undefined, opts: { decimals?: boolean } = {}) => {
   if (n == null) return "—";
-  if (opts.decimals === false) return `৳${nf0.format(n)}`;
-  return `৳${(Number.isInteger(Math.round(n * 100) / 100) ? nf0 : nf2).format(n)}`;
+  const sign = n < 0 ? "−" : "";
+  const a = Math.abs(n);
+  if (opts.decimals === false) return `${sign}৳${nf0.format(a)}`;
+  return `${sign}৳${(Number.isInteger(Math.round(a * 100) / 100) ? nf0 : nf2).format(a)}`;
 };
 
 export const number = (n: number | null | undefined) => (n == null ? "—" : nf.format(n));
@@ -121,6 +123,7 @@ export const LINE_LABEL: Record<string, string> = {
   GAS: "Gas",
   OTHER: "Other",
   DISCOUNT: "Discount",
+  ROUNDING: "Rounding",
 };
 
 export const DOC_LABEL: Record<string, string> = {

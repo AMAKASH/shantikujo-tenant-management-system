@@ -4,6 +4,7 @@ import { currentPeriod, PERIOD_RE, periodEnd, periodStart } from "../../lib/date
 import { query } from "../../lib/http.js";
 import { prisma } from "../../lib/prisma.js";
 import { byType, duesByTenant, monthlySeries, periodRows } from "./queries.js";
+import { byApartmentThenName } from "../../lib/sort.js";
 
 export const reportsRouter = Router();
 
@@ -42,7 +43,8 @@ reportsRouter.get("/monthly", async (req, res) => {
 });
 
 reportsRouter.get("/dues", async (_req, res) => {
-  const items = await duesByTenant();
+  // Dues report: apartment order. (The dashboard keeps duesByTenant's largest-first order for its top list.)
+  const items = (await duesByTenant()).sort(byApartmentThenName((r) => r.apartment, (r) => r.fullName));
   const totals = items.reduce(
     (a, r) => ({
       total: a.total + r.total,

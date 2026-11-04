@@ -8,6 +8,7 @@ import { calcElectricity, getSettings } from "../../lib/settings.js";
 import { activeLeaseWhere } from "../apartments/routes.js";
 import { recalcInvoice } from "../invoices/service.js";
 import { recordBillingReading, serializeReading } from "./service.js";
+import { byApartmentThenName } from "../../lib/sort.js";
 
 export const meterReadingsRouter = Router();
 
@@ -41,6 +42,7 @@ meterReadingsRouter.get("/", async (req, res) => {
       };
     }),
   );
+  items.sort(byApartmentThenName((i) => i.apartment.number, (i) => i.tenant.fullName));
   res.json({ period, items });
 });
 

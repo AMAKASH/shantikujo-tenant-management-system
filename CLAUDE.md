@@ -80,6 +80,9 @@ src/lib/
   dates.ts      todayISO, toDate, currentPeriod, periodStart/End, dueDateFor, addMonths, PERIOD_RE.
   sms.ts        bulksmsbd.net client: normalizeBdPhone, renderSms (Bangla month/amount/digits), smsParts,
                 sendMany (JSON, falls back to form post), getBalance, DEV_SMS_NUMBER (all SMS outside production).
+  sort.ts       compareApt / byApartmentThenName: natural apartment order ("A2" < "A10"), names ignoring
+                punctuation. Every tenant, invoice, meter-reading, apartment and report list is sorted with
+                it after fetching (a DB ORDER BY on the text gets A10 < A2). No apartment = last, by name.
   money.ts, sequence.ts (nextNumber → INV-YYYY-NNNN / RCT-YYYY-NNNN), audit.ts, prisma.ts (Tx type), logger.ts.
 src/modules/<name>/routes.ts   One Express Router per resource, mounted at /api/<name>:
   auth            login (rate-limited), logout, me, change-password
@@ -115,6 +118,7 @@ src/modules/<name>/routes.ts   One Express Router per resource, mounted at /api/
 - **`allocate(...)`** applies payments oldest-due-first. Anything left over is unallocated credit, which **`applyCredit(tx, tenantId)`** later uses up.
 - **Void** releases the invoice's payments back to credit.
 - **Electricity:** recording a meter reading adds or updates an ELECTRICITY line linked by `meterReadingId`.
+- **Rounding:** `recalcInvoice` calls `syncRounding`, which keeps one system-managed `ROUNDING` line so the total is a whole taka (half up). It can't be added or removed through the API. Invoices paid to the paisa without one are left alone. `ensureInvoice` calls `recalcInvoice` after creating. `src/scripts/round-open-invoices.ts` (`npm run round-invoices [-- --dry-run]`) backfills open invoices.
 - **Writes:** all financial writes run in `prisma.$transaction` and call `audit()`.
 
 ## Frontend (`frontend/`)
@@ -174,6 +178,7 @@ next.config.ts  output "standalone", the /api rewrite, sw.js headers, experiment
   - Design mobile-first: card lists on small screens, tables from `md:` up, and touch targets of at least 44 px.
 - **Money and dates in the UI:** format money with `taka()` and dates with `formatDate()`. Don't hand-format either.
 - **Printing:** wrap anything that shouldn't print in `print:hidden`.
+- **List order:** lists come from the API already sorted (apartment number, then name). Don't re-sort them in the UI; change `lib/sort.ts` instead.
 
 ## Recipes
 

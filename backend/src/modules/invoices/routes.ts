@@ -9,6 +9,7 @@ import { isProd } from "../../config.js";
 import { getSettings } from "../../lib/settings.js";
 import { deliveryNumber, DEV_SMS_NUMBER, normalizeBdPhone, renderSms, sendMany, smsConfigured, smsParts } from "../../lib/sms.js";
 import { applyCredit, generateForPeriod, invoiceInclude, recalcInvoice, serializeInvoice } from "./service.js";
+import { byApartmentThenName } from "../../lib/sort.js";
 
 export const invoicesRouter = Router();
 
@@ -42,7 +43,8 @@ invoicesRouter.get("/", async (req, res) => {
     orderBy: [{ period: "desc" }, { number: "desc" }],
     take: 500,
   });
-  const items = rows.map(serializeInvoice);
+  const byApt = byApartmentThenName<ReturnType<typeof serializeInvoice>>((i) => i.apartment.number, (i) => i.tenant.fullName);
+  const items = rows.map(serializeInvoice).sort((a, b) => b.period.localeCompare(a.period) || byApt(a, b));
   const totals = items
     .filter((i) => i.status !== "VOID")
     .reduce(
@@ -163,7 +165,10 @@ invoicesRouter.get("/:id", async (req, res) => {
 });
 
 const lineSchema = z.object({
-  type: z.nativeEnum(LineType).refine((t) => t !== "ELECTRICITY", "Add electricity through meter readings"),
+  type: z
+    .nativeEnum(LineType)
+    .refine((t) => t !== "ELECTRICITY", "Add electricity through meter readings")
+    .refine((t) => t !== "ROUNDING", "Rounding is added automatically"),
   description: z.string().trim().min(1).max(200),
   amount: z.coerce.number().positive().max(99_999_999),
 });
@@ -194,6 +199,7 @@ invoicesRouter.delete("/:id/lines/:lineId", async (req, res) => {
   if (line.invoice.status === "VOID") throw conflict("Cannot change a void invoice");
   if (line.invoice.status === "PAID") throw conflict("This invoice is paid. Void it or add a discount line instead.");
   if (line.meterReadingId) throw badRequest("Remove electricity charges from the meter readings screen");
+  if (line.type === "ROUNDING") throw badRequest("Rounding is managed automatically");
 
   const updated = await prisma.$transaction(async (tx) => {
     await tx.invoiceLine.delete({ where: { id: lineId } });

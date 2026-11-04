@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "LineType" ADD VALUE 'ROUNDING';

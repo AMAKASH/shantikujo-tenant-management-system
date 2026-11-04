@@ -23,8 +23,40 @@ export function coverage(lease: Pick<Lease, "startDate" | "endedAt" | "moveOutDa
   return { factor: Math.min(1, days / total), days, total };
 }
 
+const ROUNDING_DESCRIPTION = "Rounding (to whole taka)";
+
+/**
+ * Keep the system-managed ROUNDING line so that the invoice total is a whole taka (half up).
+ * Returns the rounded total. An invoice already paid to the paisa without a rounding line is left
+ * as it is, so recalculating an old settled invoice never reopens it for ৳0.50.
+ */
+async function syncRounding(
+  tx: Tx,
+  invoiceId: string,
+  lines: { id: string; type: LineType; amount: Prisma.Decimal }[],
+  paid: Prisma.Decimal,
+) {
+  const existing = lines.filter((l) => l.type === LineType.ROUNDING);
+  const raw = sum(lines.filter((l) => l.type !== LineType.ROUNDING).map((l) => l.amount));
+  const target = raw.toDecimalPlaces(0, Prisma.Decimal.ROUND_HALF_UP);
+  let diff = target.minus(raw);
+  if (existing.length === 0 && !diff.isZero() && paid.gt(0) && paid.gte(raw)) diff = ZERO;
+
+  const [keep, ...extra] = existing;
+  if (extra.length) await tx.invoiceLine.deleteMany({ where: { id: { in: extra.map((l) => l.id) } } });
+  if (diff.isZero()) {
+    if (keep) await tx.invoiceLine.delete({ where: { id: keep.id } });
+  } else if (keep) {
+    if (!D(keep.amount).equals(diff)) await tx.invoiceLine.update({ where: { id: keep.id }, data: { amount: diff } });
+  } else {
+    await tx.invoiceLine.create({ data: { invoiceId, type: LineType.ROUNDING, description: ROUNDING_DESCRIPTION, amount: diff } });
+  }
+  return raw.plus(diff);
+}
+
 /**
  * Recompute total, paidAmount and status from lines and allocations. VOID invoices are left alone.
+ * The total is rounded to a whole taka through a ROUNDING line (see syncRounding).
  * If the total dropped below what has been allocated, the newest allocations are trimmed and the
  * freed money becomes tenant credit (callers run applyCredit afterwards).
  */
@@ -32,13 +64,13 @@ export async function recalcInvoice(tx: Tx, invoiceId: string) {
   const inv = await tx.invoice.findUniqueOrThrow({
     where: { id: invoiceId },
     include: {
-      lines: { select: { amount: true } },
+      lines: { select: { id: true, type: true, amount: true } },
       allocations: { select: { id: true, amount: true }, orderBy: { id: "desc" } },
     },
   });
   if (inv.status === "VOID") return inv;
-  const total = Prisma.Decimal.max(ZERO, sum(inv.lines.map((l) => l.amount)));
   let paid = sum(inv.allocations.map((a) => a.amount));
+  const total = Prisma.Decimal.max(ZERO, await syncRounding(tx, invoiceId, inv.lines, paid));
   for (const a of inv.allocations) {
     if (paid.lte(total)) break;
     const excess = paid.minus(total);
@@ -88,6 +120,7 @@ export async function ensureInvoice(tx: Tx, lease: Lease, period: string) {
       lines: { create: lines },
     },
   });
+  await recalcInvoice(tx, invoice.id); // adds the rounding line for part-month amounts
   await applyCredit(tx, lease.tenantId);
   return { invoice: await tx.invoice.findUniqueOrThrow({ where: { id: invoice.id } }), created: true };
 }
@@ -166,7 +199,8 @@ export async function allocate(
 }
 
 export const invoiceInclude = {
-  lines: { orderBy: { createdAt: "asc" } },
+  // Rounding always last, whatever was added after it.
+  lines: { orderBy: [{ type: "asc" }, { createdAt: "asc" }] },
   tenant: { select: { id: true, fullName: true, phone: true, email: true } },
   lease: { select: { id: true, apartment: { select: { id: true, number: true } } } },
   allocations: {

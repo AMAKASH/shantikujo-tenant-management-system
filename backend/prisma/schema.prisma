@@ -253,6 +253,7 @@ enum LineType {
   GAS
   OTHER
   DISCOUNT
+  ROUNDING // system-managed: brings the invoice total to a whole taka
 }
 
 model Invoice {

@@ -53,6 +53,8 @@ Sign in with `ADMIN_EMAIL` / `ADMIN_PASSWORD` from `backend/.env`.
   The limit, the flat rate and the slab table are all editable in **Settings**.
 - A **payment** is applied to the chosen invoice first, then to the oldest open invoices. Anything left over becomes advance credit, which is applied automatically to the next bill.
 - The first and last months of a lease are **prorated by days**. Voiding an invoice returns its payments to credit.
+- **Invoice totals are whole taka.** Charges keep their paisa, and a system-managed **Rounding** line (half up, always under ৳1) brings the total to a whole number. It updates on every change and can't be added or removed by hand. Invoices already paid to the paisa are left as they are.
+  - Invoices created before this rule: run `npm run round-invoices -- --dry-run` to preview, then `npm run round-invoices` once. In the API container, run `node dist/scripts/round-open-invoices.js`. Only unpaid and partial invoices change.
 - **Printing an invoice** (Print button, or the browser's Save as PDF) produces a one-page A4 layout, separate from the on-screen view. The office phone, office email, note and accepted payment methods on it come from **Settings → Printed invoice**.
 
 ## SMS notifications

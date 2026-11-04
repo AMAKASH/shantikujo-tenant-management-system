@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { addMonths, periodEnd, periodStart, today } from "../../lib/dates.js";
 import { prisma } from "../../lib/prisma.js";
+import { byApartmentThenName } from "../../lib/sort.js";
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -128,7 +129,7 @@ export async function periodRows(period: string) {
   });
   const t = (lines: { type: string; amount: Prisma.Decimal }[], ...types: string[]) =>
     r2(lines.filter((l) => types.includes(l.type)).reduce((a, l) => a + Number(l.amount), 0));
-  return invoices.map((i) => ({
+  const rows = invoices.map((i) => ({
     invoiceId: i.id,
     number: i.number,
     apartment: i.lease.apartment,
@@ -136,10 +137,11 @@ export async function periodRows(period: string) {
     rent: t(i.lines, "RENT"),
     serviceCharge: t(i.lines, "SERVICE_CHARGE"),
     electricity: t(i.lines, "ELECTRICITY"),
-    other: t(i.lines, "WATER", "GAS", "OTHER", "DISCOUNT"),
+    other: t(i.lines, "WATER", "GAS", "OTHER", "DISCOUNT", "ROUNDING"),
     total: Number(i.total),
     paid: Number(i.paidAmount),
     balance: r2(Number(i.total) - Number(i.paidAmount)),
     status: (i.status === "UNPAID" || i.status === "PARTIAL") && i.dueDate < today() ? "OVERDUE" : i.status,
   }));
+  return rows.sort(byApartmentThenName((r) => r.apartment.number, (r) => r.tenant.fullName));
 }

@@ -8,6 +8,7 @@ import { prisma } from "../../lib/prisma.js";
 import { activeLeaseWhere } from "../apartments/routes.js";
 import { serializeLease } from "../leases/serialize.js";
 import { tenantBalances, tenantLedger } from "./balance.js";
+import { byApartmentThenName } from "../../lib/sort.js";
 
 export const tenantsRouter = Router();
 
@@ -91,7 +92,8 @@ tenantsRouter.get("/", async (req, res) => {
   const balances = await tenantBalances(tenants.map((t) => t.id));
 
   res.json({
-    items: tenants.map((t) => ({
+    items: tenants
+      .map((t) => ({
       id: t.id,
       fullName: t.fullName,
       phone: t.phone,
@@ -105,7 +107,8 @@ tenantsRouter.get("/", async (req, res) => {
       apartment: t.leases[0]?.apartment ?? null,
       leaseStatus: t.leases[0]?.status ?? null,
       due: balances.get(t.id)?.due ?? 0,
-    })),
+      }))
+      .sort(byApartmentThenName((t) => t.apartment?.number, (t) => t.fullName)),
   });
 });
 

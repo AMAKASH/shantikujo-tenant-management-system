@@ -90,7 +90,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
                 <td className="tabular px-5 py-3 text-right font-semibold sm:px-7">
                   <span className="inline-flex items-center gap-2">
                     {taka(l.amount)}
-                    {inv.status !== "VOID" && inv.status !== "PAID" && !l.meterReadingId && <RemoveLineButton invoiceId={inv.id} lineId={l.id} />}
+                    {inv.status !== "VOID" && inv.status !== "PAID" && !l.meterReadingId && l.type !== "ROUNDING" && <RemoveLineButton invoiceId={inv.id} lineId={l.id} />}
                   </span>
                 </td>
               </tr>

@@ -138,6 +138,7 @@ Priority: **M** = must (v1), **S** = should (v1 if time allows), **P2** = phase 
 | BILL-09 | Printable invoice and money receipt (A4 and mobile-friendly; PDF download). Sequential numbers (`INV-2026-0001`, `RCT-2026-0001`). The printed invoice is a one-page branded A4 layout: tenant and invoice details, charges, totals with balance due, payments received, a note, accepted payment methods, and office contact details. | S |
 | BILL-10 | Late fee rule: a flat or percentage fee after N days past due. Off by default. | P2 |
 | BILL-11 | Every financial change is recorded in an audit log. Paid invoices cannot be edited, only voided with a reason. | M |
+| BILL-12 | Invoice totals are rounded to a whole taka (half up) by an automatic **Rounding** line; individual charges keep their paisa. | M |
 
 ### 2.7 Income tracking and dues (REP)
 

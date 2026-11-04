@@ -14,7 +14,8 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed": "tsx --env-file=.env prisma/seed.ts",
     "db:studio": "prisma studio",
-    "create-admin": "node dist/scripts/create-admin.js"
+    "create-admin": "node dist/scripts/create-admin.js",
+    "round-invoices": "tsx --env-file=.env src/scripts/round-open-invoices.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

@@ -5,7 +5,7 @@ export type LeaseStatus = "ACTIVE" | "NOTICE" | "ENDED";
 export type InvoiceStatus = "UNPAID" | "PARTIAL" | "PAID" | "VOID";
 export type DisplayStatus = InvoiceStatus | "OVERDUE";
 export type PaymentMethod = "CASH" | "BANK" | "BKASH" | "NAGAD" | "ROCKET" | "CHEQUE" | "OTHER";
-export type LineType = "RENT" | "SERVICE_CHARGE" | "ELECTRICITY" | "WATER" | "GAS" | "OTHER" | "DISCOUNT";
+export type LineType = "RENT" | "SERVICE_CHARGE" | "ELECTRICITY" | "WATER" | "GAS" | "OTHER" | "DISCOUNT" | "ROUNDING";
 
 export interface Ref {
   id: string;

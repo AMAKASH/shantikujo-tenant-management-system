@@ -8,6 +8,7 @@ import { prisma } from "../../lib/prisma.js";
 import { getDefaultProperty } from "../settings/property.js";
 import { isoDate } from "../../lib/dates.js";
 import { serializeReading } from "../meter-readings/service.js";
+import { compareApt } from "../../lib/sort.js";
 
 export const apartmentsRouter = Router();
 
@@ -76,7 +77,7 @@ apartmentsRouter.get("/", async (req, res) => {
     include: withLease,
     orderBy: [{ floor: "asc" }, { number: "asc" }],
   });
-  let items = rows.map(serializeApartment);
+  let items = rows.map(serializeApartment).sort((a, b) => compareApt(a.number, b.number));
   if (status) items = items.filter((a) => a.status === status);
   res.json({ items });
 });
