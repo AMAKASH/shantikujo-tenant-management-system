@@ -52,7 +52,7 @@ export default async function SettingsPage() {
               {audit.items.slice(0, 50).map((a) => (
                 <li key={a.id} className="px-5 py-2.5">
                   <p>
-                    <span className="font-semibold capitalize">{a.action.replace("-", " ")}</span> {a.entity.toLowerCase()}
+                    <span className="font-semibold capitalize">{a.action.replace("-", " ")}</span> {a.entity.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase()}
                   </p>
                   <p className="text-xs text-muted">
                     {a.user?.name ?? "System"} · {new Date(a.createdAt).toLocaleString("en-GB", { timeZone: "Asia/Dhaka", dateStyle: "medium", timeStyle: "short" })}

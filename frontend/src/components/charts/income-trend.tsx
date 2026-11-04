@@ -4,9 +4,10 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import type { TrendPoint } from "@/lib/types";
 import { compactTaka, periodLabel, taka } from "@/lib/utils";
 
-// Validated pair (dataviz palette checker, light surface): both pass CVD & contrast.
+// Blue vs orange: validated with the dataviz palette checker (light surface). Normal-vision ΔE 42,
+// CVD ΔE ≥ 32, both ≥ 3:1 contrast. Two hues, not two shades, so the series are easy to tell apart.
 const COLLECTED = "#1D4ED8";
-const EXPECTED = "#5B8DEF";
+const EXPECTED = "#E8710A";
 
 export function IncomeTrendChart({ data }: { data: TrendPoint[] }) {
   const rows = data.map((d) => ({ ...d, label: periodLabel(d.period) }));

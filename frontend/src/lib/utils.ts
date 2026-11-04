@@ -6,9 +6,14 @@ export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
 // Bangladesh uses lakh/crore grouping (1,00,000), which matches the en-IN locale.
 const nf = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2, minimumFractionDigits: 0 });
 const nf0 = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
+const nf2 = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2, minimumFractionDigits: 2 });
 
-export const taka = (n: number | null | undefined, opts: { decimals?: boolean } = {}) =>
-  n == null ? "—" : `৳${(opts.decimals === false ? nf0 : nf).format(n)}`;
+/** BDT amount: whole amounts without decimals (৳12,000), anything with paisa always shows two (৳12,807.50). */
+export const taka = (n: number | null | undefined, opts: { decimals?: boolean } = {}) => {
+  if (n == null) return "—";
+  if (opts.decimals === false) return `৳${nf0.format(n)}`;
+  return `৳${(Number.isInteger(Math.round(n * 100) / 100) ? nf0 : nf2).format(n)}`;
+};
 
 export const number = (n: number | null | undefined) => (n == null ? "—" : nf.format(n));
 
@@ -43,6 +48,9 @@ export function ordinal(n: number) {
   if (t >= 11 && t <= 13) return `${n}th`;
   return `${n}${["th", "st", "nd", "rd"][n % 10] ?? "th"}`;
 }
+
+/** Calendar day (Asia/Dhaka) of a timestamp, as YYYY-MM-DD for formatDate(). */
+export const dhakaDay = (at: string) => new Date(at).toLocaleDateString("en-CA", { timeZone: "Asia/Dhaka" });
 
 export const currentPeriod = () => todayISO().slice(0, 7);
 

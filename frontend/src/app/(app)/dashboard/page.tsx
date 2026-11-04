@@ -81,7 +81,7 @@ export default async function DashboardPage() {
         </Alert>
       )}
 
-      <div className="mt-4 grid gap-4 sm:mt-5 lg:grid-cols-3">
+      <div className="mt-4 grid gap-4 sm:mt-5 lg:grid-cols-3 [&>*]:min-w-0">
         <Card className="lg:col-span-2">
           <CardHeader title="Income, last 12 months" description="Cash collected each month against what was billed" action={<ButtonLink href="/reports" variant="ghost" size="sm">Reports <ArrowRight className="size-3.5" /></ButtonLink>} />
           <CardBody>
@@ -96,7 +96,7 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      <div className="mt-4 grid gap-4 sm:mt-5 lg:grid-cols-3">
+      <div className="mt-4 grid gap-4 sm:mt-5 lg:grid-cols-3 [&>*]:min-w-0">
         <Card className="lg:col-span-2">
           <CardHeader
             title="Who still owes"

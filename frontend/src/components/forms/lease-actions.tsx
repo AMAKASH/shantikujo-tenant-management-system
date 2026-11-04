@@ -121,7 +121,7 @@ export function LeaseActions({ lease }: { lease: Lease }) {
             <Field label="Final meter reading" htmlFor="finalMeterReading">
               <Input id="finalMeterReading" name="finalMeterReading" type="number" inputMode="decimal" step="0.01" min={0} />
             </Field>
-            <Field label="Final electricity bill" htmlFor="finalElectricityAmount" hint="Empty = slab estimate">
+            <Field label="Final electricity bill" htmlFor="finalElectricityAmount" hint="Empty = estimated from Settings">
               <Input id="finalElectricityAmount" name="finalElectricityAmount" prefix="৳" type="number" inputMode="decimal" step="0.01" min={0} />
             </Field>
           </div>

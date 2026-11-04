@@ -73,11 +73,24 @@ async function MonthlyReport({ period }: { period: string }) {
         <StatTile label="Collection rate" value={`${Math.round(s.collectionRate * 100)}%`} sub={`${taka(s.received, { decimals: false })} cash received in month`} icon={Percent} />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
         <Card>
           <CardHeader title="By charge type" />
           <CardBody>
-            <table className="w-full text-sm">
+            <ul className="divide-y divide-line text-sm sm:hidden">
+              {r.byType.map((t) => (
+                <li key={t.type} className="flex items-start justify-between gap-3 py-2.5">
+                  <div className="min-w-0">
+                    <p className="font-semibold">{LINE_LABEL[t.type]}</p>
+                    <p className="text-xs text-muted">
+                      Settled <span className="tabular text-success">{taka(t.paid)}</span> · Due <span className="tabular">{taka(t.due)}</span>
+                    </p>
+                  </div>
+                  <span className="tabular shrink-0 font-bold">{taka(t.billed)}</span>
+                </li>
+              ))}
+            </ul>
+            <table className="hidden w-full text-sm sm:table">
               <thead className="text-left text-xs text-muted uppercase">
                 <tr>
                   <th className="pb-2 font-semibold">Type</th>
@@ -192,7 +205,59 @@ async function DuesReport() {
             />
           }
         />
-        <div className="mt-3 overflow-x-auto">
+        <ul className="mt-3 divide-y divide-line border-t border-line md:hidden">
+          {items.map((d) => {
+            const parts = [
+              ["Rent", d.rent],
+              ["Service", d.service],
+              ["Electricity", d.electricity],
+              ["Other", d.other],
+            ].filter(([, v]) => Number(v) > 0) as [string, number][];
+            const aging = [
+              ["1–30d", d.d30],
+              ["31–60d", d.d60],
+              ["60d+", d.d90 + d.d90plus],
+            ].filter(([, v]) => Number(v) > 0) as [string, number][];
+            return (
+              <li key={d.tenantId} className="flex flex-col gap-2 px-4 py-3.5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <Link href={`/tenants/${d.tenantId}`} className="font-semibold hover:text-accent">{d.fullName}</Link>
+                    <p className="text-xs text-muted">
+                      {d.apartment ? `Apt ${d.apartment} · ` : ""}since {periodLabel(d.oldestPeriod)}
+                    </p>
+                  </div>
+                  <span className="tabular shrink-0 text-base font-bold">{taka(d.total)}</span>
+                </div>
+                <p className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted">
+                  {parts.map(([k, v]) => (
+                    <span key={k}>
+                      {k} <span className="tabular font-semibold text-ink">{taka(v)}</span>
+                    </span>
+                  ))}
+                </p>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="flex flex-wrap gap-x-3 text-xs">
+                    {aging.length ? (
+                      aging.map(([k, v]) => (
+                        <span key={k} className={k === "60d+" ? "font-semibold text-danger" : "text-warning"}>
+                          {k} overdue <span className="tabular">{taka(v)}</span>
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-muted">Not yet overdue</span>
+                    )}
+                  </p>
+                  <RecordPaymentButton target={{ tenantId: d.tenantId, tenantName: d.fullName }} variant="outline" size="sm">
+                    Pay
+                  </RecordPaymentButton>
+                </div>
+              </li>
+            );
+          })}
+          {items.length === 0 && <li className="px-5 py-8 text-center text-sm text-muted">No outstanding dues.</li>}
+        </ul>
+        <div className="mt-3 hidden overflow-x-auto md:block">
           <table className="w-full min-w-[860px] text-sm">
             <thead className="bg-canvas text-left text-xs text-muted uppercase">
               <tr>

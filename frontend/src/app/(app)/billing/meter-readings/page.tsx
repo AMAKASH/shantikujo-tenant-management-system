@@ -29,7 +29,7 @@ export default async function MeterReadingsPage({ searchParams }: { searchParams
         </p>
       </div>
       <Alert tone="info" className="mt-4">
-        Enter each sub-meter reading and the bill amount. Leave the amount empty to use the slab estimate. The charge is added to that month&apos;s invoice.
+        Enter each sub-meter reading and the bill amount. Leave the amount empty to use the estimate (flat rate for low usage, otherwise the slab rates). The charge is added to that month&apos;s invoice.
       </Alert>
       {items.length === 0 ? (
         <Card className="mt-4">

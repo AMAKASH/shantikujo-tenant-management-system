@@ -64,7 +64,7 @@ export default async function TenantPage({ params }: { params: Promise<{ id: str
         <Money label="Advance credit" value={t.balance.credit} tone={t.balance.credit > 0 ? "text-success" : "text-muted"} />
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-3">
+      <div className="mt-4 grid gap-4 lg:grid-cols-3 [&>*]:min-w-0">
         <div className="flex flex-col gap-4 lg:col-span-2">
           <Card>
             <CardHeader title="Current lease" action={lease && <LeaseStatusBadge status={lease.status} />} />

@@ -6,7 +6,7 @@ import { compactTaka, LINE_LABEL, taka } from "@/lib/utils";
 import { Legend } from "./income-trend";
 
 const PAID = "#1D4ED8";
-const DUE = "#5B8DEF";
+const DUE = "#E8710A";
 const ORDER = ["RENT", "SERVICE_CHARGE", "ELECTRICITY", "WATER", "GAS", "OTHER", "DISCOUNT"];
 
 /** This month's bills by charge type, split into collected and still due (stacked horizontal bars). */

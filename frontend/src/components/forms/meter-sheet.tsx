@@ -22,7 +22,7 @@ export interface SheetRow {
 
 export function MeterSheet({ period, rows, electricity }: { period: string; rows: SheetRow[]; electricity: Settings["electricity"] }) {
   return (
-    <div className="mt-4 grid gap-3 md:grid-cols-2">
+    <div className="mt-4 grid gap-3 md:grid-cols-2 [&>*]:min-w-0">
       {rows.map((r) => (
         <MeterRow key={r.leaseId} period={period} row={r} electricity={electricity} />
       ))}
@@ -77,7 +77,7 @@ function MeterRow({ period, row, electricity }: { period: string; row: SheetRow;
           </div>
           {saved && <Badge tone="success"><Check className="size-3" /> Saved</Badge>}
         </div>
-        <div className="grid grid-cols-[1fr_1fr_auto] items-end gap-2">
+        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-end gap-2 [&_input]:min-w-0">
           <label className="flex flex-col gap-1 text-xs font-semibold">
             Current reading
             <Input
