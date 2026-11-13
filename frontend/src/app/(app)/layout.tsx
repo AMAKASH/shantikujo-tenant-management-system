@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Bell } from "lucide-react";
+import { PaymentDialogProvider } from "@/components/forms/payment-dialog";
 import { BottomNav } from "@/components/shell/bottom-nav";
 import { Sidebar } from "@/components/shell/sidebar";
 import { UserMenu } from "@/components/shell/user-menu";
@@ -11,6 +12,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const [{ user }, settings] = await Promise.all([api<{ user: SessionUser }>("/auth/me"), api<Settings>("/settings")]);
 
   return (
+    <PaymentDialogProvider>
     <div className="flex min-h-dvh">
       <Sidebar propertyName={settings.propertyName} />
       <div className="flex min-w-0 flex-1 flex-col">
@@ -35,5 +37,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </div>
       <BottomNav />
     </div>
+    </PaymentDialogProvider>
   );
 }

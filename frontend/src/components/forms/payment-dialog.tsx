@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,8 @@ export function PaymentDialog({ open, onClose, target }: { open: boolean; onClos
   /** Set once saved: the dialog switches to the "Payment recorded" step with the optional SMS. */
   const [recorded, setRecorded] = useState<{ payment: Payment; dueAfter: number } | null>(null);
 
+  // The provider remounts this dialog (new key) on every open and keeps `target` in its own state,
+  // so a router.refresh() after saving can't change these deps and wipe the "Payment recorded" step.
   useEffect(() => {
     if (!open) return;
     setRecorded(null);
@@ -201,6 +203,30 @@ export function PaymentDialog({ open, onClose, target }: { open: boolean; onClos
   );
 }
 
+// ───────── One app-level dialog ─────────
+// The dialog lives in the (app) layout, not inside the button that opens it. Saving a payment calls
+// router.refresh(), which can remove that button (a paid invoice, a cleared dues row); the dialog,
+// and its "Payment recorded" step, must survive that.
+
+const PaymentDialogContext = createContext<((target: PaymentTarget) => void) | null>(null);
+
+export function PaymentDialogProvider({ children }: { children: React.ReactNode }) {
+  const [state, setState] = useState<{ target: PaymentTarget; key: number } | null>(null);
+  const openPayment = useCallback((target: PaymentTarget) => setState((s) => ({ target: { ...target }, key: (s?.key ?? 0) + 1 })), []);
+  return (
+    <PaymentDialogContext.Provider value={openPayment}>
+      {children}
+      {state && <PaymentDialog key={state.key} open onClose={() => setState(null)} target={state.target} />}
+    </PaymentDialogContext.Provider>
+  );
+}
+
+export function usePaymentDialog() {
+  const open = useContext(PaymentDialogContext);
+  if (!open) throw new Error("usePaymentDialog must be used inside <PaymentDialogProvider>");
+  return open;
+}
+
 /** A button that opens the payment dialog. */
 export function RecordPaymentButton({
   target = {},
@@ -215,13 +241,10 @@ export function RecordPaymentButton({
   size?: "sm" | "md" | "lg";
   className?: string;
 }) {
-  const [open, setOpen] = useState(false);
+  const openPayment = usePaymentDialog();
   return (
-    <>
-      <Button type="button" variant={variant} size={size} onClick={() => setOpen(true)} className={className}>
-        {children}
-      </Button>
-      <PaymentDialog open={open} onClose={() => setOpen(false)} target={target} />
-    </>
+    <Button type="button" variant={variant} size={size} onClick={() => openPayment(target)} className={className}>
+      {children}
+    </Button>
   );
 }
