@@ -56,7 +56,8 @@ export function Dialog({
               <X className="size-5" />
             </button>
           </div>
-          <div className="overflow-y-auto px-5 py-5 pb-safe">{children}</div>
+          {/* Bottom padding: at least 1.25rem, more on phones with a home indicator (pb-safe alone would zero it). */}
+          <div className="overflow-y-auto px-5 pt-5 pb-[max(env(safe-area-inset-bottom),1.25rem)]">{children}</div>
         </div>
       )}
     </dialog>
