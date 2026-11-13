@@ -205,6 +205,36 @@ export interface NotifyResult {
   results: { invoiceId: string; tenantName: string; status: "SENT" | "FAILED" | "SKIPPED"; error?: string }[];
 }
 
+export interface SmsPreview {
+  message: string;
+  characters: number;
+  parts: number;
+}
+
+export interface SmsSendResult {
+  sent: number;
+  failed: number;
+  skipped: number;
+  devOverride: boolean;
+  devNumber: string | null;
+  gatewayError: string | null;
+  results: { phone: string; tenantId: string | null; name: string | null; status: "SENT" | "FAILED" | "SKIPPED"; error?: string }[];
+}
+
+export interface SmsMessage {
+  id: string;
+  kind: "CUSTOM" | "PAYMENT";
+  phone: string;
+  sentTo: string;
+  message: string;
+  status: "SENT" | "FAILED";
+  error: string | null;
+  tenant: { id: string; fullName: string } | null;
+  payment: { id: string; number: string } | null;
+  sentBy: string | null;
+  createdAt: string;
+}
+
 export interface Payment {
   id: string;
   number: string;
@@ -217,6 +247,8 @@ export interface Payment {
   allocated: number;
   unallocated: number;
   allocations: { invoice: { id: string; number: string; period: string }; amount: number }[];
+  notifiedAt: string | null;
+  notifyCount: number;
 }
 
 export interface DuesRow {
@@ -299,6 +331,7 @@ export interface Settings {
   invoiceNote: string;
   paymentMethods: PaymentMethod[];
   smsTemplate: string;
+  paymentSmsTemplate: string;
   storage: "s3" | "local";
   electricity: {
     slabs: { upTo: number | null; rate: number }[];

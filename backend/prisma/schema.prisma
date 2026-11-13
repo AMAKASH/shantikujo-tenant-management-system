@@ -31,6 +31,7 @@ model User {
   sessions      Session[]
   auditLogs     AuditLog[]
   notifications InvoiceNotification[]
+  smsMessages   SmsMessage[]
   createdAt     DateTime              @default(now())
   updatedAt     DateTime              @updatedAt
 }
@@ -128,6 +129,7 @@ model Tenant {
   invoices              Invoice[]
   payments              Payment[]
   notifications         InvoiceNotification[]
+  smsMessages           SmsMessage[]
   user                  User?
   createdAt             DateTime              @default(now())
   updatedAt             DateTime              @updatedAt
@@ -317,6 +319,7 @@ model Payment {
   reference   String?
   note        String?
   allocations PaymentAllocation[]
+  smsMessages SmsMessage[]
   createdAt   DateTime            @default(now())
 
   @@index([tenantId])
@@ -389,5 +392,35 @@ model AuditLog {
   createdAt DateTime @default(now())
 
   @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+enum SmsKind {
+  CUSTOM
+  PAYMENT
+}
+
+/// A hand-written SMS (SMS page) or a payment confirmation. Bill SMS live in InvoiceNotification.
+/// sentTo differs from phone outside production (dev override).
+model SmsMessage {
+  id           String             @id @default(cuid())
+  kind         SmsKind
+  batchId      String?
+  tenantId     String?
+  tenant       Tenant?            @relation(fields: [tenantId], references: [id])
+  paymentId    String?
+  payment      Payment?           @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  phone        String
+  sentTo       String
+  message      String
+  status       NotificationStatus
+  providerCode String?
+  error        String?
+  sentById     String?
+  sentBy       User?              @relation(fields: [sentById], references: [id])
+  createdAt    DateTime           @default(now())
+
+  @@index([tenantId])
+  @@index([paymentId, status])
   @@index([createdAt])
 }

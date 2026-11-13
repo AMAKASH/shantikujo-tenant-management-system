@@ -9,12 +9,17 @@ import { prisma } from "../../lib/prisma.js";
 import { nextNumber } from "../../lib/sequence.js";
 import { getSettings } from "../../lib/settings.js";
 import { allocate, applyCredit, recalcInvoice } from "../invoices/service.js";
+import { isProd } from "../../config.js";
+import { DEV_SMS_NUMBER, normalizeBdPhone, smsConfigured, smsParts } from "../../lib/sms.js";
+import { paymentSms, sendAndLog } from "../sms/service.js";
 
 export const paymentsRouter = Router();
 
 const paymentInclude = {
   tenant: { select: { id: true, fullName: true, phone: true } },
   allocations: { include: { invoice: { select: { id: true, number: true, period: true } } } },
+  smsMessages: { where: { status: "SENT" }, orderBy: { createdAt: "desc" }, take: 1, select: { createdAt: true } },
+  _count: { select: { smsMessages: { where: { status: "SENT" } } } },
 } satisfies Prisma.PaymentInclude;
 
 function serializePayment(p: Prisma.PaymentGetPayload<{ include: typeof paymentInclude }>) {
@@ -32,6 +37,8 @@ function serializePayment(p: Prisma.PaymentGetPayload<{ include: typeof paymentI
     unallocated: Math.round((Number(p.amount) - allocated) * 100) / 100,
     allocations: p.allocations.map((a) => ({ invoice: a.invoice, amount: Number(a.amount) })),
     createdAt: p.createdAt,
+    notifiedAt: p.smsMessages[0]?.createdAt.toISOString() ?? null,
+    notifyCount: p._count.smsMessages,
   };
 }
 
@@ -98,6 +105,38 @@ paymentsRouter.post("/", async (req, res) => {
     method: data.method,
   });
   res.status(201).json(serializePayment(payment));
+});
+
+// ───────── Payment confirmation SMS (sent by hand, never automatically) ─────────
+
+paymentsRouter.get("/:id/notify/preview", async (req, res) => {
+  const r = await paymentSms(param(req, "id"));
+  if (!r) throw notFound("Payment");
+  res.json({
+    message: r.message,
+    characters: [...r.message].length,
+    parts: smsParts(r.message),
+    phone: r.payment.tenant.phone,
+    validPhone: normalizeBdPhone(r.payment.tenant.phone) != null,
+  });
+});
+
+paymentsRouter.post("/:id/notify", async (req, res) => {
+  const id = param(req, "id");
+  if (!smsConfigured()) {
+    res.status(503).json({ error: "SMS is not configured. Add SMS_API_KEY and SMS_SENDER_ID to the API environment." });
+    return;
+  }
+  const r = await paymentSms(id);
+  if (!r) throw notFound("Payment");
+  const t = r.payment.tenant;
+  const out = await sendAndLog(
+    "PAYMENT",
+    [{ tenantId: t.id, name: t.fullName, apartment: null, phone: t.phone, message: r.message, paymentId: id }],
+    req.user?.id,
+  );
+  await audit(req.user?.id, "notify", "Payment", id, { sent: out.sent, failed: out.failed, devOverride: !isProd });
+  res.json({ ...out, devOverride: !isProd, devNumber: isProd ? null : DEV_SMS_NUMBER });
 });
 
 paymentsRouter.get("/:id", async (req, res) => {

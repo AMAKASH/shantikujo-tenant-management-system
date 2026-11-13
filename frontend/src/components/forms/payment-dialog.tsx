@@ -8,7 +8,10 @@ import { Dialog } from "@/components/ui/dialog";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import { apiFetch, errorMessage } from "@/lib/api.client";
 import type { Invoice, Payment, TenantListItem } from "@/lib/types";
-import { METHOD_LABEL, periodLabel, taka, todayISO } from "@/lib/utils";
+import { formatDate, METHOD_LABEL, periodLabel, taka, todayISO } from "@/lib/utils";
+import { CheckCircle2 } from "lucide-react";
+import { DescList } from "@/components/ui/misc";
+import { PaymentSmsPanel } from "./payment-sms";
 
 export interface PaymentTarget {
   tenantId?: string;
@@ -29,9 +32,12 @@ export function PaymentDialog({ open, onClose, target }: { open: boolean; onClos
   const [invoiceId, setInvoiceId] = useState(target.invoiceId ?? "");
   const [amount, setAmount] = useState(target.amount ? String(target.amount) : "");
   const [saving, setSaving] = useState(false);
+  /** Set once saved: the dialog switches to the "Payment recorded" step with the optional SMS. */
+  const [recorded, setRecorded] = useState<{ payment: Payment; dueAfter: number } | null>(null);
 
   useEffect(() => {
     if (!open) return;
+    setRecorded(null);
     setTenantId(target.tenantId ?? "");
     setInvoiceId(target.invoiceId ?? "");
     setAmount(target.amount ? String(target.amount) : "");
@@ -74,13 +80,40 @@ export function PaymentDialog({ open, onClose, target }: { open: boolean; onClos
       toast.success(`Payment ${p.number} recorded`, {
         description: p.unallocated > 0 ? `${taka(p.unallocated)} kept as advance credit` : undefined,
       });
-      onClose();
+      setRecorded({ payment: p, dueAfter: Math.max(0, Math.round((totalDue - p.allocated) * 100) / 100) });
       router.refresh();
     } catch (err) {
       toast.error(errorMessage(err));
     } finally {
       setSaving(false);
     }
+  }
+
+  if (recorded) {
+    const p = recorded.payment;
+    return (
+      <Dialog open={open} onClose={onClose} title="Payment recorded" description={p.tenant.fullName}>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-3 rounded-xl bg-success-bg px-4 py-3">
+            <CheckCircle2 className="size-6 shrink-0 text-success" aria-hidden />
+            <div className="min-w-0 flex-1 text-sm">
+              <p className="tabular text-lg font-extrabold text-success">{taka(p.amount)}</p>
+              <p className="text-muted">
+                {p.number} · {formatDate(p.date)} · {METHOD_LABEL[p.method]}
+              </p>
+            </div>
+          </div>
+          <DescList
+            items={[
+              ["Applied to", p.allocations.length ? p.allocations.map((a) => periodLabel(a.invoice.period)).join(", ") : "None"],
+              ...(p.unallocated > 0 ? ([["Advance credit", taka(p.unallocated)]] as [string, React.ReactNode][]) : []),
+              ["Still due", <span key="due" className={recorded.dueAfter > 0 ? "font-bold text-danger" : "font-bold text-success"}>{taka(recorded.dueAfter)}</span>],
+            ]}
+          />
+          <PaymentSmsPanel payment={p} onDone={onClose} />
+        </div>
+      </Dialog>
+    );
   }
 
   return (

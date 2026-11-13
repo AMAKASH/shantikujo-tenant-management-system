@@ -4,7 +4,7 @@ import { IncomeTrendChart } from "@/components/charts/income-trend";
 import { RecordPaymentButton } from "@/components/forms/payment-dialog";
 import { InvoiceStatusBadge } from "@/components/ui/badge";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
-import { CsvButton } from "@/components/ui/csv-button";
+import { ExcelButton } from "@/components/ui/excel-button";
 import { PageHeader, StatTile } from "@/components/ui/misc";
 import { MonthPicker } from "@/components/ui/month-picker";
 import { FilterTabs } from "@/components/ui/tabs";
@@ -137,11 +137,7 @@ async function MonthlyReport({ period }: { period: string }) {
         <CardHeader
           title="By apartment"
           action={
-            <CsvButton
-              filename={`stms-income-${period}.csv`}
-              header={["Invoice", "Apartment", "Tenant", "Rent", "Service charge", "Electricity", "Other", "Total", "Paid", "Balance", "Status"]}
-              rows={r.rows.map((x) => [x.number, x.apartment.number, x.tenant.fullName, x.rent, x.serviceCharge, x.electricity, x.other, x.total, x.paid, x.balance, x.status])}
-            />
+            <ExcelButton tab="monthly" params={{ period }} />
           }
         />
         <div className="mt-3 overflow-x-auto">
@@ -198,11 +194,7 @@ async function DuesReport() {
           title={`${items.length} tenant${items.length === 1 ? "" : "s"} with dues`}
           description="Aging is counted from each bill's due date"
           action={
-            <CsvButton
-              filename="stms-dues.csv"
-              header={["Tenant", "Phone", "Apartment", "Since", "Rent", "Service", "Electricity", "Other", "Total", "Not yet due", "1-30 days", "31-60 days", "61-90 days", "90+ days"]}
-              rows={items.map((d) => [d.fullName, d.phone, d.apartment, d.oldestPeriod, d.rent, d.service, d.electricity, d.other, d.total, d.current, d.d30, d.d60, d.d90, d.d90plus])}
-            />
+            <ExcelButton tab="dues" />
           }
         />
         <ul className="mt-3 divide-y divide-line border-t border-line md:hidden">
@@ -329,7 +321,7 @@ async function YearlyReport({ year }: { year: number }) {
         <CardHeader
           title="Table"
           action={
-            <CsvButton filename={`stms-${year}.csv`} header={["Month", "Billed", "Collected"]} rows={r.months.map((m) => [m.period, m.expected, m.collected])} />
+            <ExcelButton tab="yearly" params={{ year }} />
           }
         />
         <div className="mt-3 overflow-x-auto">

@@ -15,8 +15,10 @@ export interface AppSettings {
   contactEmail: string;
   invoiceNote: string;
   paymentMethods: string[];
-  /** Bill SMS. Placeholders: {month}, {amount}, {dueDay}. */
+  /** Bill SMS. Placeholders: {month}, {amount}, {dueDay}, {total}, {rent}, {units}, {electricity}, {name}, {apartment}. */
   smsTemplate: string;
+  /** Payment confirmation SMS (sent by hand). Placeholders: {name}, {amount}, {receipt}, {date}, {month}, {due}. */
+  paymentSmsTemplate: string;
   electricity: {
     slabs: SlabRow[];
     demandCharge: number;
@@ -49,6 +51,13 @@ export const DEFAULT_SETTINGS: AppSettings = {
     "",
     "বাসা নং ২৭, রোড নং ৫, ব্লক ডি",
     "ঢাকা উদ্যান, ঢাকা।",
+  ].join("\n"),
+  paymentSmsTemplate: [
+    "{name}, আপনার {month} মাসের {amount} টাকা পরিশোধ গ্রহণ করা হয়েছে। রসিদ নং {receipt}, তারিখ {date}।",
+    "বর্তমান বকেয়া: {due} টাকা।",
+    "",
+    "ধন্যবাদান্তে,",
+    "শান্তিকুঞ্জ",
   ].join("\n"),
   // Default: BD residential (LT-A) style slabs. Editable in Settings; verify against the current tariff.
   electricity: {

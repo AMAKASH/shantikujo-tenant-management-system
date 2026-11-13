@@ -1,4 +1,4 @@
-import { BarChart3, Building2, CreditCard, Gauge, Home, Settings, Users, type LucideIcon } from "lucide-react";
+import { BarChart3, Building2, CreditCard, Gauge, Home, MessageSquare, Settings, Users, type LucideIcon } from "lucide-react";
 
 export interface NavItem {
   href: string;
@@ -13,6 +13,7 @@ export const NAV: NavItem[] = [
   { href: "/apartments", label: "Apartments", icon: Building2, mobile: true },
   { href: "/billing", label: "Billing", icon: CreditCard, mobile: true },
   { href: "/billing/meter-readings", label: "Meter readings", icon: Gauge },
+  { href: "/sms", label: "SMS", icon: MessageSquare },
   { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/settings", label: "Settings", icon: Settings },
 ];

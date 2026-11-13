@@ -57,7 +57,7 @@ Express 5 with TypeScript (ESM, NodeNext). Imports use `.js` suffixes. Validatio
 ```
 prisma/schema.prisma      Models: User, Session, Property, Apartment, Tenant, FamilyMember, Document,
                           Lease, MeterReading, Invoice, InvoiceLine, Payment, PaymentAllocation,
-                          InvoiceNotification (SMS log),
+                          InvoiceNotification (bill SMS log), SmsMessage (hand-written + payment SMS log),
                           Setting (JSON), Sequence, AuditLog. binaryTargets include linux-musl.
 prisma/seed.ts            Dev data: 8 apartments, 6 tenants, ~8 months of bills and payments.
                           --force wipes business data (S3 files are NOT deleted).
@@ -78,7 +78,8 @@ src/lib/
                 calcElectricity (flat rate ≤ maxUnits; otherwise slabs + demand charge + VAT).
   storage.ts    putObject/deleteObject/signedUrl/localStream (S3 when S3_BUCKET is set, else disk).
   dates.ts      todayISO, toDate, currentPeriod, periodStart/End, dueDateFor, addMonths, PERIOD_RE.
-  sms.ts        bulksmsbd.net client: normalizeBdPhone, renderSms (Bangla month/amount/digits), smsParts,
+  sms.ts        bulksmsbd.net client: normalizeBdPhone, fillTemplate ({token} replace; empty values removed),
+                renderSms (bill SMS: month/amount/dueDay/total/rent/units/electricity/name/apartment), smsParts,
                 sendMany (JSON, falls back to form post), getBalance, DEV_SMS_NUMBER (all SMS outside production).
   sort.ts       compareApt / byApartmentThenName: natural apartment order ("A2" < "A10"), names ignoring
                 punctuation. Every tenant, invoice, meter-reading, apartment and report list is sorted with
@@ -98,13 +99,17 @@ src/modules/<name>/routes.ts   One Express Router per resource, mounted at /api/
                   (DISCOUNT is stored negative), delete line, void. SMS: POST /invoices/notify
                   {invoiceIds} and GET /invoices/notify/preview (registered before /:id); each attempt
                   is stored as an InvoiceNotification. serializeInvoice adds notifiedAt / notifyCount.
-  payments        list, create (+ allocation), get, delete.
+  payments        list, create (+ allocation), get, delete. Payment SMS (manual only): GET /:id/notify/preview,
+                  POST /:id/notify (logged as SmsMessage kind PAYMENT); serializer adds notifiedAt / notifyCount.
   meter-readings  service.ts: lastReading, recordInitialReading, recordBillingReading ({append}
                   for final readings). Routes: bulk sheet, /estimate, post, delete.
   reports         queries.ts (raw SQL: byType, monthlySeries, duesByTenant, periodRows).
-                  Routes: monthly, dues, yearly.
+                  Routes: monthly, dues, yearly, export?tab=monthly|dues|yearly (formatted .xlsx via exceljs,
+                  styling in excel.ts).
   dashboard       KPIs, charts and dues for the current period.
-  sms             GET /sms/status → {configured, devOverride, devNumber, balance}.
+  sms             GET /sms/status → {configured, devOverride, devNumber, balance}; POST /sms/preview, POST /sms/send
+                  {message, tenantIds, numbers} ({name} {apartment} {due} per tenant), GET /sms/history.
+                  service.ts: sendAndLog (shared with payment SMS), paymentSms.
   settings        GET/PUT app settings (Zod schema here); property.ts syncs the Property row.
 ```
 
@@ -145,17 +150,19 @@ src/app/
   (app)/<section>/page.tsx  Server components that fetch with api() and render. Sections: dashboard,
                   tenants (list/new/[id]/[id]/edit), apartments (same), leases/new,
                   billing (layout with tabs; invoices list at /billing, invoices/[id], payments,
-                  meter-readings), reports (?tab=monthly|dues|yearly), settings.
+                  meter-readings), sms (composer + history), reports (?tab=monthly|dues|yearly), settings.
   (app)/**/loading.tsx  Skeleton screens built from components/ui/skeleton.tsx. Add one for every new route.
 src/components/
   ui/        button (Button, ButtonLink), card, badge (status badges), alert, field (Field, Input,
              Textarea, Select, SearchInput), dialog (native <dialog>; bottom sheet on mobile),
              misc (PageHeader, EmptyState, Avatar, DescList, StatTile), tabs (FilterTabs),
-             billing-tabs, search-box, month-picker, csv-button, skeleton.
+             billing-tabs, search-box, month-picker, excel-button, sms-template-editor (variable chips;
+             BILL_/PAYMENT_/CUSTOM_SMS_VARIABLES mirror the backend), skeleton.
   forms/     Client components that mutate data: apartment-form, tenant-form (+ upload.ts),
              lease-form, lease-actions, payment-dialog, generate-invoices, invoice-actions,
              meter-sheet, settings-form, documents-panel, archive-button, delete-payment,
-             notify-dialog (NotifyTenantsButton + NotifiedBadge).
+             notify-dialog (NotifyTenantsButton + NotifiedBadge), sms-composer, payment-sms (PaymentSmsPanel
+             on the dialog's "Payment recorded" step + PaymentSmsButton row action).
   shell/     nav.ts (NAV items), sidebar, bottom-nav, user-menu.
   charts/    income-trend, by-type (Recharts).
   pwa/       pwa-provider (SW registration, offline banner, update toast), install-button.

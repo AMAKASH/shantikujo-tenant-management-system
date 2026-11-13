@@ -3,6 +3,8 @@ import Link from "next/link";
 import { Wallet } from "lucide-react";
 import { DeletePaymentButton } from "@/components/forms/delete-payment";
 import { RecordPaymentButton } from "@/components/forms/payment-dialog";
+import { NotifiedBadge } from "@/components/forms/notify-dialog";
+import { PaymentSmsButton } from "@/components/forms/payment-sms";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/misc";
@@ -59,9 +61,15 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
                 </div>
                 <div className="text-right">
                   <p className="tabular font-bold">{taka(p.amount)}</p>
-                  {p.unallocated > 0 && <Badge tone="info">{taka(p.unallocated)} credit</Badge>}
+                  <div className="mt-0.5 flex flex-wrap justify-end gap-1">
+                    {p.unallocated > 0 && <Badge tone="info">{taka(p.unallocated)} credit</Badge>}
+                    {p.notifiedAt && <NotifiedBadge at={p.notifiedAt} />}
+                  </div>
                 </div>
-                <DeletePaymentButton id={p.id} number={p.number} />
+                <div className="flex shrink-0 items-center print:hidden">
+                  <PaymentSmsButton payment={p} />
+                  <DeletePaymentButton id={p.id} number={p.number} />
+                </div>
               </li>
             ))}
           </ul>

@@ -28,7 +28,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={jakarta.variable}>
-      <body className="min-h-dvh font-sans">
+      <body className="min-h-dvh font-sans" suppressHydrationWarning>
         {children}
         <Toaster position="top-center" richColors closeButton />
         <PwaProvider />

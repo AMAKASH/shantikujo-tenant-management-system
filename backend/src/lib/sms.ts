@@ -35,11 +35,71 @@ export function bnMonthName(period: string) {
   return bnMonth.format(new Date(Date.UTC(y, m - 1, 1)));
 }
 
-export function renderSms(template: string, v: { period: string; amount: number; dueDay: number }) {
-  return template
-    .replaceAll("{month}", bnMonthName(v.period))
-    .replaceAll("{amount}", bnAmount(v.amount))
-    .replaceAll("{dueDay}", bnNumber.format(v.dueDay));
+const bnDateFmt = new Intl.DateTimeFormat("bn-BD", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+
+/** "2026-11-14" → "১৪ নভেম্বর, ২০২৬". */
+export const bnDate = (iso: string) => bnDateFmt.format(new Date(`${iso.slice(0, 10)}T00:00:00Z`));
+
+/** Unique periods → "অক্টোবর ও নভেম্বর". */
+export function bnMonthList(periods: string[]) {
+  const names = [...new Set(periods)].sort().map(bnMonthName);
+  return names.length <= 1 ? (names[0] ?? "") : `${names.slice(0, -1).join(", ")} ও ${names.at(-1)}`;
+}
+
+/**
+ * Replace {key} tokens. A key whose value is null/undefined/"" is removed and the spacing around it
+ * tidied (used when a typed-in number has no tenant, so {name} has nothing to fill). Unknown tokens stay.
+ */
+export function fillTemplate(template: string, vars: Record<string, string | null | undefined>) {
+  let out = template;
+  let removed = false;
+  for (const [key, value] of Object.entries(vars)) {
+    const token = `{${key}}`;
+    if (!out.includes(token)) continue;
+    if (value == null || value === "") removed = true;
+    out = out.replaceAll(token, value ?? "");
+  }
+  if (!removed) return out;
+  return out
+    .split("\n")
+    .map((line) =>
+      line
+        .replace(/[ \t]{2,}/g, " ")
+        .replace(/[ \t]+([,।!?.:;])/g, "$1")
+        .replace(/^[ \t]*[,।:;][ \t]*/, "")
+        .trim(),
+    )
+    .join("\n");
+}
+
+/** Values for the bill SMS. Every number is rendered with Bangla digits. */
+export interface BillSmsVars {
+  period: string;
+  amount: number;
+  dueDay: number;
+  total?: number;
+  rent?: number;
+  units?: number;
+  electricity?: number;
+  name?: string | null;
+  apartment?: string | null;
+}
+
+/** Placeholders accepted by the bill SMS template (Settings). */
+export const BILL_SMS_VARS = ["month", "amount", "dueDay", "total", "rent", "units", "electricity", "name", "apartment"] as const;
+
+export function renderSms(template: string, v: BillSmsVars) {
+  return fillTemplate(template, {
+    month: bnMonthName(v.period),
+    amount: bnAmount(v.amount),
+    dueDay: bnNumber.format(v.dueDay),
+    total: bnAmount(v.total ?? v.amount),
+    rent: bnAmount(v.rent ?? 0),
+    units: bnAmount(v.units ?? 0),
+    electricity: bnAmount(v.electricity ?? 0),
+    name: v.name ?? "",
+    apartment: v.apartment ?? "",
+  });
 }
 
 /** Unicode (Bangla) SMS: 70 characters in one part, 67 per part when split. */

@@ -29,6 +29,12 @@ const schema = z.object({
     .min(1)
     .max(1000)
     .refine((t) => t.includes("{amount}"), "The SMS message must include {amount}"),
+  paymentSmsTemplate: z
+    .string()
+    .trim()
+    .min(1)
+    .max(1000)
+    .refine((t) => t.includes("{amount}"), "The payment SMS must include {amount}"),
   paymentMethods: z.array(z.enum(["CASH", "BANK", "BKASH", "NAGAD", "ROCKET", "CHEQUE", "OTHER"])).max(7),
   electricity: z.object({
     slabs: z

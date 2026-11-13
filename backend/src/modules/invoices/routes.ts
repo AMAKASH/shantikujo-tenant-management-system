@@ -7,7 +7,7 @@ import { badRequest, body, conflict, notFound, param, query } from "../../lib/ht
 import { prisma } from "../../lib/prisma.js";
 import { isProd } from "../../config.js";
 import { getSettings } from "../../lib/settings.js";
-import { deliveryNumber, DEV_SMS_NUMBER, normalizeBdPhone, renderSms, sendMany, smsConfigured, smsParts } from "../../lib/sms.js";
+import { type BillSmsVars, deliveryNumber, DEV_SMS_NUMBER, normalizeBdPhone, renderSms, sendMany, smsConfigured, smsParts } from "../../lib/sms.js";
 import { applyCredit, generateForPeriod, invoiceInclude, recalcInvoice, serializeInvoice } from "./service.js";
 import { byApartmentThenName } from "../../lib/sort.js";
 
@@ -65,17 +65,38 @@ invoicesRouter.post("/generate", async (req, res) => {
 
 const smsInvoiceInclude = {
   tenant: { select: { id: true, fullName: true, phone: true } },
+  lease: { select: { apartment: { select: { number: true } } } },
+  lines: { select: { type: true, amount: true, meterReading: { select: { units: true } } } },
 } satisfies Prisma.InvoiceInclude;
+
+type SmsInvoice = Prisma.InvoiceGetPayload<{ include: typeof smsInvoiceInclude }>;
+
+/** Everything the bill SMS template can use for one invoice. */
+function invoiceSmsVars(inv: SmsInvoice, dueDay: number): BillSmsVars {
+  const sumOf = (type: LineType) => inv.lines.filter((l) => l.type === type).reduce((a, l) => a + Number(l.amount), 0);
+  const units = inv.lines.reduce((a, l) => a + Number(l.meterReading?.units ?? 0), 0);
+  return {
+    period: inv.period,
+    amount: balanceOf(inv),
+    dueDay,
+    total: Number(inv.total),
+    rent: sumOf("RENT"),
+    units,
+    electricity: sumOf("ELECTRICITY"),
+    name: inv.tenant.fullName,
+    apartment: inv.lease.apartment.number,
+  };
+}
 
 const balanceOf = (inv: { total: Prisma.Decimal; paidAmount: Prisma.Decimal }) =>
   Math.round((Number(inv.total) - Number(inv.paidAmount)) * 100) / 100;
 
 invoicesRouter.get("/notify/preview", async (req, res) => {
   const { invoiceId } = query(req, z.object({ invoiceId: z.string().min(1) }));
-  const inv = await prisma.invoice.findUnique({ where: { id: invoiceId } });
+  const inv = await prisma.invoice.findUnique({ where: { id: invoiceId }, include: smsInvoiceInclude });
   if (!inv) throw notFound("Invoice not found");
   const s = await getSettings();
-  const message = renderSms(s.smsTemplate, { period: inv.period, amount: balanceOf(inv), dueDay: s.dueDay });
+  const message = renderSms(s.smsTemplate, invoiceSmsVars(inv, s.dueDay));
   res.json({ message, characters: [...message].length, parts: smsParts(message) });
 });
 
@@ -102,7 +123,7 @@ invoicesRouter.post("/notify", async (req, res) => {
       results.push({ ...base, status: "SKIPPED", error: inv.status === "VOID" ? "Invoice is void" : "Nothing left to pay" });
       continue;
     }
-    const message = renderSms(s.smsTemplate, { period: inv.period, amount, dueDay: s.dueDay });
+    const message = renderSms(s.smsTemplate, invoiceSmsVars(inv, s.dueDay));
     const phone = normalizeBdPhone(inv.tenant.phone);
     if (!phone) {
       failedRows.push({ invoiceId: inv.id, tenantId: inv.tenantId, phone: inv.tenant.phone, sentTo: "", message, amount, error: "Tenant's phone number is not a valid Bangladeshi mobile number" });
